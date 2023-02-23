@@ -150,7 +150,7 @@
 
     <template id="phone-numbers">
         <h1>Phone numbers
-            <button class="btn btn-lg btn-light" @click.prevent.stop="refreshPhoneNumbers"><i
+            <button class="btn btn-lg btn-light" @click.prevent.stop="refreshPhoneNumbers('reload')"><i
                     class="bi bi-arrow-repeat"></i></button>
         </h1>
         <hr>
@@ -256,12 +256,15 @@
 
         // calls given Twilio API path
         // when credentials are not passed, reads it from the store
-        async function callTwilioAPI(path, method, body, credentials) {
+        async function callTwilioAPI({ path, method, body, authCredentials, cache }) {
             try {
                 const resp = await fetch(`https://api.twilio.com/2010-04-01${path}`, {
-                    method,
+                    method: method || "GET",
+                    mode: "cors",
+                    cache: cache || "force-cache",
+                    credentials: "omit", // do not negotiate using browser popup based credential
                     headers: {
-                        "Authorization": "Basic " + btoa((credentials?.account_sid || store.account_sid) + ":" + (credentials?.auth_token || store.auth_token)),
+                        "Authorization": "Basic " + btoa((authCredentials?.account_sid || store.account_sid) + ":" + (authCredentials?.auth_token || store.auth_token)),
                     },
                     body,
                 });
@@ -349,7 +352,7 @@
                     this.processing = true;
                     this.connect_result = {};
 
-                    const [error, result] = await callTwilioAPI(`/Accounts/${this.form.account_sid}.json`, "GET", null, this.form);
+                    const [error, result] = await callTwilioAPI({ path: `/Accounts/${this.form.account_sid}.json`, authCredentials: this.form, cache: "reload" });
 
                     if (error) {
                         this.connect_result.error = error;
@@ -412,10 +415,10 @@
             },
 
             methods: {
-                async refreshPhoneNumbers() {
+                async refreshPhoneNumbers(cache) {
                     this.loading = true;
 
-                    const [error, result] = await callTwilioAPI(`/Accounts/${store.account_sid}/IncomingPhoneNumbers.json`, "GET");
+                    const [error, result] = await callTwilioAPI({ path: `/Accounts/${store.account_sid}/IncomingPhoneNumbers.json`, cache: cache });
 
                     if (error) {
                         this.error = error;
