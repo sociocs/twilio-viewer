@@ -4,8 +4,12 @@
     <meta name="description" content="Easy viewing of Twilio account, subaccounts, and related resources.">
     <title>Twilio Viewer</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
 
     <style>
         table {
@@ -15,211 +19,194 @@
 </head>
 
 <body>
-    <main id="app" class="d-flex flex-nowrap">
-        <section class="d-flex flex-column flex-shrink-0 p-3 text-bg-dark vh-100" style="width: 240px;">
-            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-                <span class="fs-4">Twilio Viewer</span>
-            </a>
-            <hr>
-            <ul class="nav nav-pills flex-column mb-auto">
-                <li class="nav-item">
-                    <router-link to="/" class="nav-link text-white"><i class="bi bi-key me-2"></i>
-                        Auth</router-link>
-                </li>
-                <li>
-                    <router-link to="/phone-numbers" class="nav-link text-white"><i class="bi bi-telephone me-2"></i>
-                        Phone numbers</router-link>
-                </li>
-                <li>
-                    <router-link to="/messaging-logs" class="nav-link text-white"><i class="bi bi-chat-dots me-2"></i>
-                        Messaging logs</router-link>
-                </li>
-                <li>
-                    <router-link to="/voice-call-logs" class="nav-link text-white"><i class="bi bi-mic me-2"></i>
-                        Voice call logs</router-link>
-                </li>
-            </ul>
-        </section>
+    <div id="app">
+        <v-app>
+            <v-navigation-drawer theme="dark" permanent>
+                <v-list>
+                    <v-list-item title="Twilio Viewer"></v-list-item>
+                </v-list>
+                <v-divider></v-divider>
+                <v-list :lines="false">
+                    <v-list-item v-for="(route, i) in routes" :key="i" :value="route" active-color="primary"
+                        :to="route.path">
+                        <template v-slot:prepend>
+                            <span
+                                class="material-icons v-icon notranslate v-theme--dark v-icon--size-default">{{route.meta.icon}}</span>
+                        </template>
 
-        <section class="flex-grow-1 p-3">
+                        <v-list-item-title v-text="route.name"></v-list-item-title>
+                    </v-list-item>
+                </v-list>
+
+            </v-navigation-drawer>
+
             <router-view></router-view>
-        </section>
-    </main>
+        </v-app>
+    </div>
 
     <template id="auth">
-        <h1>Auth</h1>
-        <hr>
-        <div v-if="loading" class="d-flex justify-content-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-        <div v-else>
-            <ul class="nav nav-tabs">
-                <li class="nav-item">
-                    <a href="#" class="nav-link" :class="{ active: newTabActive }"
-                        @click.stop.prevent="tabSwitch('new')">New</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" :class="{ active: savedTabActive }"
-                        @click.stop.prevent="tabSwitch('saved')">Saved</a>
-                </li>
-            </ul>
-            <div v-if="newTabActive" class="mt-3">
-                <form @submit.prevent="connect">
-                    <div class="mb-3">
-                        <label for="account-sid" class="form-label">Account SID</label>
-                        <input type="text" class="form-control" id="account-sid" name="account-sid"
-                            placeholder="Enter account SID" required v-model="form.account_sid">
-                    </div>
-                    <div class="mb-3">
-                        <label for="auth-token" class="form-label">Auth Token</label>
-                        <input type="password" class="form-control" id="auth-token" name="auth-token"
-                            placeholder="Enter auth token" required v-model="form.auth_token">
-                    </div>
-                    <div class="d-flex align-items-center mb-3">
-                        <button type="submit" class="btn btn-primary me-2">Connect</button>
-                        <span v-if="processing" class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">processing...</span>
-                        </span>
-                    </div>
-                </form>
-                <div v-if="connect_result.account_info">
-                    <hr>
-                    <h2>Account information</h2>
-                    <table class="table table-bordered">
-                        <tbody>
-                            <tr v-for="item in connect_result.account_info">
-                                <th>{{item.label}}</th>
-                                <td>{{item.value}}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <hr>
-                    <h3>Save connection</h3>
-                    <form @submit.prevent="saveConnection">
-                        <div class="row mb-3">
-                            <label for="connection-name" class="col-sm-2 col-form-label">Connection name</label>
-                            <div class="col-sm-10">
-                                <input type="text" class="form-control" id="connection-name"
-                                    placeholder="Enter connection name" required v-model="form.connection_name">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </form>
-                </div>
-                <div v-else-if="connect_result.error" class="alert alert-danger" role="alert">
-                    {{connect_result.error}}
-                </div>
-            </div>
-            <div v-else-if="savedTabActive" class="mt-3">
-                <div v-if="!saved_connections?.length">
-                    <div class="p-3 text-center">
-                        There are no records available.
-                    </div>
-                </div>
-                <div v-else>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Account SID</th>
-                                <th>Name</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="connection in saved_connections">
-                                <td>{{connection.account_sid}}</td>
-                                <td>{{connection.name}}</td>
-                                <td class="text-center">
-                                    <span v-if="connection.in_use" title="Currently using this account.">
-                                        <i class="bi bi-check-lg fs-5 text-success"></i>
-                                    </span>
-                                    <span v-else>
-                                        <a href="#" @click.prevent.stop="switchConnection(connection.account_sid)"
-                                            title="Switch to this account.">Use</a>
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <v-app-bar :title="$route.name"></v-app-bar>
+
+        <v-main>
+            <v-container fluid>
+                <v-sheet v-if="loading" class="text-center">
+                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                </v-sheet>
+                <v-sheet v-else>
+                    <v-tabs v-model="tab" color="primary">
+                        <v-tab value="new">New</v-tab>
+                        <v-tab value="saved">Saved</v-tab>
+                    </v-tabs>
+
+                    <v-window v-model="tab">
+                        <v-window-item value="new">
+                            <v-sheet class="py-4">
+                                <v-form @submit.prevent="connect">
+                                    <v-text-field v-model="form.account_sid" label="Account SID"
+                                        :rules="[v => !!v || 'Required.']"></v-text-field>
+                                    <v-text-field v-model="form.auth_token" label="Auth token"
+                                        :rules="[v => !!v || 'Required.']"></v-text-field>
+                                    <v-btn type="submit" class="mt-2" color="primary"
+                                        :loading="processing">Connect</v-btn>
+                                </v-form>
+                            </v-sheet>
+                            <v-sheet v-if="connect_result.account_info" class="pa-1">
+                                <v-card title="Account information">
+                                    <v-card-text>
+                                        <table is="vue:v-table">
+                                            <tbody>
+                                                <tr v-for="item in connect_result.account_info">
+                                                    <th>{{item.label}}</th>
+                                                    <td>{{item.value}}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </v-card-text>
+                                </v-card>
+                                <v-card title="Save connection" class="mt-4">
+                                    <v-card-text>
+                                        <v-form @submit.prevent="saveConnection">
+                                            <v-text-field v-model="form.connection_name" label="Connection name"
+                                                :rules="[v => !!v || 'Required.']"></v-text-field>
+                                            <v-btn type="submit" class="mt-2" color="primary"
+                                                :loading="processing">Save</v-btn>
+                                        </v-form>
+                                    </v-card-text>
+                                </v-card>
+                            </v-sheet>
+                            <v-sheet v-else-if="connect_result.error">
+                                <v-alert type="error" title="Error" :text="connect_result.error"
+                                    :icon="false"></v-alert>
+                            </v-sheet>
+                        </v-window-item>
+
+                        <v-window-item value="saved">
+                            <v-sheet v-if="!saved_connections?.length" class="text-center py-4">
+                                <v-alert text="There are no records available."></v-alert>
+                            </v-sheet>
+                            <v-sheet v-else class="py-4">
+                                <table is="vue:v-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Account SID</th>
+                                            <th>Name</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="connection in saved_connections">
+                                            <td>{{connection.account_sid}}</td>
+                                            <td>{{connection.name}}</td>
+                                            <td class="text-center">
+                                                <span v-if="connection.in_use" title="Currently using this account."
+                                                    class="material-icons text-green-darken-4">
+                                                    check
+                                                </span>
+                                                <span v-else>
+                                                    <a href="#"
+                                                        @click.prevent.stop="switchConnection(connection.account_sid)"
+                                                        title="Switch to this account.">Use</a>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </v-sheet>
+                        </v-window-item>
+                    </v-window>
+                </v-sheet>
+            </v-container>
+        </v-main>
     </template>
 
     <template id="phone-numbers">
-        <h1>Phone numbers
-            <button class="btn btn-lg btn-light" @click.prevent.stop="refreshPhoneNumbers('reload')"><i
-                    class="bi bi-arrow-repeat"></i></button>
-        </h1>
-        <hr>
-        <div v-if="loading" class="d-flex justify-content-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-        <div v-else-if="error">
-            <div class="alert alert-danger" role="alert">
-                {{error}}
-            </div>
-        </div>
-        <div v-else-if="!records?.length">
-            <div class="p-3 text-center">
-                There are no records available.
-            </div>
-        </div>
-        <div v-else>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>SID</th>
-                        <th>Phone number</th>
-                        <th>Capabilities</th>
-                        <th>Webhook URLs</th>
-                        <th>Status</th>
-                        <th>Date created</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="r in records">
-                        <td>{{r.sid}}</td>
-                        <td>{{r.phone_number}}</td>
-                        <td>
-                            <div v-for="c in capabilities(r.capabilities)">
-                                {{c.label}}: {{c.value}}
-                            </div>
-                        <td>
-                            <div v-for="url in urls(r)"
-                                style="max-width: 24rem; text-overflow: ellipsis; overflow: hidden;">
-                                {{url.label}}: {{url.value}}
-                            </div>
-                        </td>
-                        <td>{{r.status}}</td>
-                        <td>{{r.date_created}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <v-app-bar :title="$route.name">
+            <template v-slot:append>
+                <v-btn icon :loading="loading" @click="refreshPhoneNumbers('reload')">
+                    <span class="material-icons">
+                        cached
+                    </span>
+                </v-btn>
+            </template>
+        </v-app-bar>
+
+        <v-main>
+            <v-sheet v-if="loading" class="text-center pa-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+            <v-sheet v-else-if="error" class="pa-4">
+                <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
+            </v-sheet>
+            <v-sheet v-else-if="!records?.length" class="text-center pa-4">
+                <v-alert text="There are no records available."></v-alert>
+            </v-sheet>
+            <v-sheet v-else>
+                <table is="vue:v-table">
+                    <thead>
+                        <tr>
+                            <th>SID</th>
+                            <th>Phone number</th>
+                            <th>Capabilities</th>
+                            <th>Webhook URLs</th>
+                            <th>Status</th>
+                            <th>Date created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="r in records">
+                            <td>{{r.sid}}</td>
+                            <td>{{r.phone_number}}</td>
+                            <td>
+                                <v-list lines="one" density="compact" variant="text" class="py-0">
+                                    <v-list-item v-for="c in capabilities(r.capabilities)" :key="c.label"
+                                        :title="c.label" :subtitle="c.value" class="px-0"></v-list-item>
+                                </v-list>
+                            <td>
+                                <v-list lines="one" density="compact" variant="text" class="py-0">
+                                    <v-list-item v-for="url in urls(r)" :key="url.label" :title="url.label"
+                                        :subtitle="url.value" class="px-0"></v-list-item>
+                                </v-list>
+                            </td>
+                            <td>{{r.status}}</td>
+                            <td>{{r.date_created}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </v-sheet>
+        </v-main>
     </template>
 
-    <template id="messaging-logs">
-        <div>Messaging logs</div>
-    </template>
+    <template id="message-logs">Message logs</template>
 
-    <template id="voice-call-logs">
-        <div>Voice call logs</div>
-    </template>
+    <template id="voice-call-logs">Voice call logs</template>
 
     <script type="importmap">
         { "imports": {
             "vue":        "https://cdn.jsdelivr.net/npm/vue@3.2.47/dist/vue.esm-browser.js",
             "@vue/devtools-api": "https://cdn.jsdelivr.net/npm/@vue/devtools-api@6.5.0/lib/esm/index.min.js",
-            "vue-router": "https://cdn.jsdelivr.net/npm/vue-router@4.1.6/dist/vue-router.esm-browser.js"
+            "vue-router": "https://cdn.jsdelivr.net/npm/vue-router@4.1.6/dist/vue-router.esm-browser.js",
+            "vuetify": "https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.esm.js"
         } }
-    </script>
-
-    <script>
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
@@ -227,6 +214,7 @@
     <script type="module">
         import { createApp, reactive } from "vue";
         import { createRouter, createWebHistory } from "vue-router";
+        import { createVuetify } from "vuetify";
 
         const db = new Dexie("twilio-viewer-db");
 
@@ -248,7 +236,7 @@
             for (let i = 0; i < keys?.length; i++) {
                 const key = keys[i];
 
-                result.push({ label: key, value: object[key] });
+                result.push({ label: key, value: object[key]?.toString() || "None" });
             }
 
             return result;
@@ -285,7 +273,8 @@
 
             data() {
                 return {
-                    active_tab: "new",
+                    appBarActions: [{ icon: "key" }],
+                    tab: "new",
                     loading: true,
                     processing: false,
                     form: {
@@ -304,7 +293,7 @@
                 await this.refreshSavedConnections();
 
                 if (this.saved_connections.length) {
-                    this.active_tab = "saved";
+                    this.tab = "saved";
                 }
 
                 this.loading = false;
@@ -312,19 +301,15 @@
 
             computed: {
                 newTabActive() {
-                    return this.active_tab === "new";
+                    return this.tab === "new";
                 },
 
                 savedTabActive() {
-                    return this.active_tab === "saved";
+                    return this.tab === "saved";
                 }
             },
 
             methods: {
-                tabSwitch(newTab) {
-                    this.active_tab = newTab;
-                },
-
                 async refreshSavedConnections() {
                     const connections = await db.connections.orderBy("name").toArray();
 
@@ -349,6 +334,10 @@
                 },
 
                 async connect() {
+                    if (!this.form.account_sid || !this.form.auth_token) {
+                        return;
+                    }
+
                     this.processing = true;
                     this.connect_result = {};
 
@@ -368,6 +357,10 @@
                 },
 
                 async saveConnection() {
+                    if (!this.form.account_sid || !this.form.auth_token || !this.form.connection_name) {
+                        return;
+                    }
+
                     // remove in_use from other records
                     await this.dbResetInUse();
 
@@ -379,7 +372,7 @@
                     await this.refreshSavedConnections();
 
                     // switch to saved tab
-                    this.active_tab = "saved";
+                    this.tab = "saved";
 
                     // reset form
                     this.resetFormData();
@@ -440,23 +433,39 @@
         };
 
         // routing
+        const routes = [
+            { path: "/", name: "Auth", component: Auth, meta: { icon: "key" } },
+            { path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, icon: "phone", meta: { icon: "face" } },
+            { path: "/message-logs", name: "Message logs", templateID: "message-logs", meta: { icon: "speaker_notes" } },
+            { path: "/voice-call-logs", name: "Voice call logs", templateID: "voice-call-logs", meta: { icon: "settings_voice" } }
+        ];
+
         const router = createRouter({
             history: createWebHistory(),
-            routes: [
-                { path: "/", component: Auth },
-                { path: "/phone-numbers", component: PhoneNumbers },
-                { path: "/messaging-logs", component: { template: "#messaging-logs" } },
-                { path: "/voice-call-logs", component: { template: "#voice-call-logs" } },
-            ],
-            linkActiveClass: "active",
-            linkExactActiveClass: "active",
+            routes: routes.map(x => ({ path: x.path, name: x.name, component: x.component || { template: `#${x.templateID}` } })),
         })
 
+        // vuetify
+        const vuetify = createVuetify();
+
         // creat vue app
-        const app = createApp({});
+        const app = createApp({
+            data() {
+                return {
+                    routes,
+                }
+            },
+
+            computed: {
+                appBarTitle() {
+                    return this.$route.name;
+                }
+            },
+        });
 
         app.use(router);
+        app.use(vuetify);
 
-        app.mount("#app");
+        app.mount("#app");        
     </script>
 </body>
