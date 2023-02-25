@@ -142,7 +142,7 @@
     <template id="phone-numbers">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" @click="refreshPhoneNumbers('reload')">
+                <v-btn icon :loading="loading" @click="refreshPhoneNumbers('reload')" title="Refresh">
                     <span class="material-icons">
                         cached
                     </span>
