@@ -267,14 +267,14 @@
                     <thead>
                         <tr>
                             <th>SID</th>
-                            <th>Direction</th>
+                            <th class="text-center">Direction</th>
                             <th>From</th>
                             <th>To</th>
                             <th>Body</th>
-                            <th>Segments</th>
-                            <th>Status</th>
-                            <th>Price</th>
                             <th>Date</th>
+                            <th class="text-center">Segments</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Price</th>
                         </tr>
                     </thead>
 
@@ -285,14 +285,14 @@
                                     {{r.sid}}
                                 </div>
                             </td>
-                            <td>{{r.direction}}</td>
+                            <td class="text-center">{{r.direction}}</td>
                             <td>{{r.from}}</td>
                             <td>{{r.to}}</td>
                             <td>{{r.body}}</td>
-                            <td>{{r.num_segments}}</td>
-                            <td>{{r.status}}</td>
-                            <td>{{price(r)}}</td>
                             <td :title="r.date_updated">{{localDate(r.date_updated)}}</td>
+                            <td class="text-center">{{r.num_segments}}</td>
+                            <td class="text-center">{{r.status}}</td>
+                            <td class="text-center">{{price(r)}}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -645,6 +645,7 @@
             data() {
                 return {
                     loading: true,
+                    loading_more: false,
                     searching: false,
                     form: {
                         from: "",
@@ -664,18 +665,26 @@
             },
 
             methods: {
-                async refreshMessageHistory(cache) {
-                    this.loading = true;
-
-                    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}`, cache: cache });
+                async fetchData({ path, cache, appendResults }) {
+                    const [error, result] = await callTwilioAPI({ path, cache });
 
                     if (error) {
                         this.error = error;
                         this.next_page_uri = "";
                     } else {
-                        this.records = result.messages;
+                        if (appendResults) {
+                            result.messages.forEach(x => this.records.push(x));
+                        } else {
+                            this.records = result.messages;
+                        }
                         this.next_page_uri = result.next_page_uri;
                     }
+                },
+
+                async refreshMessageHistory(cache) {
+                    this.loading = true;
+
+                    await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}`, cache: cache });
 
                     this.loading = false;
                 },
@@ -705,34 +714,22 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
-
-                    if (error) {
-                        this.error = error;
-                        this.next_page_uri = "";
-                    } else {
-                        this.records = result.messages;
-                        this.next_page_uri = result.next_page_uri;
-                    }
+                    await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
 
                     this.searching = false;
                 },
 
                 loadMore() {
-                    if (!this.next_page_uri) {
+                    if (!this.next_page_uri || this.loading_more) {
                         return;
                     }
 
-                    setTimeout(async () => {
-                        const [error, result] = await callTwilioAPI({ path: this.next_page_uri });
+                    this.loading_more = true;
 
-                        if (error) {
-                            this.error = error;
-                            this.next_page_uri = "";
-                        } else {
-                            result.messages.forEach(x => this.records.push(x));
-                            this.next_page_uri = result.next_page_uri;
-                        }
+                    setTimeout(async () => {
+                        await this.fetchData({ path: this.next_page_uri, appendResults: true });
+
+                        this.loading_more = false;
                     }, 500);
                 },
 
@@ -753,7 +750,7 @@
             data() {
                 return {
                     loading: true,
-                    loading_more: true,
+                    loading_more: false,
                     searching: false,
                     form: {
                         from: "",
@@ -792,9 +789,7 @@
                 async refreshVoiceCallHistory(cache) {
                     this.loading = true;
 
-                    const path = `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}`;
-
-                    await this.fetchData({ path, cache: cache });
+                    await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}`, cache: cache });
 
                     this.loading = false;
                 },
@@ -824,9 +819,7 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    const path = `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}&${searchStr}`;
-
-                    await this.fetchData({ path, cache: "reload" });
+                    await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
 
                     this.searching = false;
                 },
