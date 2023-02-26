@@ -303,7 +303,100 @@
         </v-main>
     </template>
 
-    <template id="voice-call-history">Voice call history</template>
+    <template id="voice-call-history">
+        <v-app-bar :title="$route.name">
+            <template v-slot:append>
+                <v-btn icon :loading="loading" :disabled="loading" @click="refreshVoiceCallHistory('reload')"
+                    title="Refresh">
+                    <span class="material-icons">
+                        cached
+                    </span>
+                </v-btn>
+            </template>
+        </v-app-bar>
+
+        <v-main>
+            <v-sheet v-if="loading" class="text-center pa-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+            <v-sheet v-else-if="error" class="pa-4">
+                <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
+            </v-sheet>
+            <v-sheet v-else>
+                <v-container>
+                    <v-form @submit.prevent="search">
+                        <v-row align="center">
+                            <v-col>
+                                <v-text-field v-model="form.from" label="From number" hide-details="auto"
+                                    density="compact" placeholder="e.g. 16319999998"></v-text-field>
+                            </v-col>
+
+                            <v-col>
+                                <v-text-field v-model="form.to" label="To number" hide-details="auto" density="compact"
+                                    placeholder="e.g. 16319999999"></v-text-field>
+                            </v-col>
+
+                            <v-col>
+                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto"
+                                    density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
+                            </v-col>
+
+                            <v-col>
+                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto"
+                                    density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
+                            </v-col>
+
+                            <v-col cols="12" md="1">
+                                <v-btn type="submit" variant="outlined" color="primary" :loading="searching"
+                                    :disabled="searching">Search</v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-form>
+                </v-container>
+
+                <v-sheet v-if="!records?.length" class="text-center pa-4">
+                    <v-alert text="There are no records available."></v-alert>
+                </v-sheet>
+
+                <table v-else is="vue:v-table">
+                    <thead>
+                        <tr>
+                            <th>SID</th>
+                            <th class="text-center">Direction</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Start time</th>
+                            <th>End time</th>
+                            <th class="text-center">Duration</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Price</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="r in records" :key="r.sid">
+                            <td>
+                                <div style="max-width: 100px;" class="text-truncate" :title="r.sid">
+                                    {{r.sid}}
+                                </div>
+                            </td>
+                            <td class="text-center">{{r.direction}}</td>
+                            <td>{{r.from}}</td>
+                            <td>{{r.to}}</td>
+                            <td title="r.start_time">{{localDate(r.start_time)}}</td>
+                            <td title="localDate">{{localDate(r.end_time)}}</td>
+                            <td class="text-center">{{duration(r.duration)}}</td>
+                            <td class="text-center">{{r.status}}</td>
+                            <td class="text-center">{{price(r)}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <v-layout v-if="next_page_uri" v-intersect="loadMore">
+                    <v-progress-linear indeterminate height="6"></v-progress-linear>
+                </v-layout>
+            </v-sheet>
+        </v-main>
+    </template>
 
     <script type="importmap">
         { "imports": {
@@ -571,7 +664,7 @@
             },
 
             methods: {
-                async refreshMessageHistory(cache, nextPageUrl) {
+                async refreshMessageHistory(cache) {
                     this.loading = true;
 
                     const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}`, cache: cache });
@@ -653,12 +746,125 @@
             },
         };
 
+        // voice call history component
+        const VoiceCallHistory = {
+            template: "#voice-call-history",
+
+            data() {
+                return {
+                    loading: true,
+                    loading_more: true,
+                    searching: false,
+                    form: {
+                        from: "",
+                        to: "",
+                        from_date: "",
+                        to_date: "",
+                    },
+                    error: "",
+                    records: [],
+                    page_size: 20,
+                    next_page_uri: "",
+                };
+            },
+
+            async created() {
+                this.refreshVoiceCallHistory();
+            },
+
+            methods: {
+                async fetchData({ path, cache, appendResults }) {
+                    const [error, result] = await callTwilioAPI({ path, cache });
+
+                    if (error) {
+                        this.error = error;
+                        this.next_page_uri = "";
+                    } else {
+                        if (appendResults) {
+                            result.calls.forEach(x => this.records.push(x));
+                        } else {
+                            this.records = result.calls;
+                        }
+                        this.next_page_uri = result.next_page_uri;
+                    }
+                },
+
+                async refreshVoiceCallHistory(cache) {
+                    this.loading = true;
+
+                    const path = `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}`;
+
+                    await this.fetchData({ path, cache: cache });
+
+                    this.loading = false;
+                },
+
+                async search() {
+                    const form = this.form;
+
+                    if (!form.from && !form.to && !form.from_date && !form.to_date) {
+                        return this.refreshVoiceCallHistory();
+                    }
+
+                    this.next_page_uri = "";
+                    this.searching = true;
+
+                    const searchList = [];
+                    if (form.from) {
+                        searchList.push(`From=${form.from}`);
+                    }
+                    if (form.to) {
+                        searchList.push(`To=${form.to}`);
+                    }
+                    if (form.from_date) {
+                        searchList.push(`StartTime>=${form.from_date}`);
+                    }
+                    if (form.to_date) {
+                        searchList.push(`EndTime<=${form.to_date}`);
+                    }
+                    const searchStr = searchList.join("&");
+
+                    const path = `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}&${searchStr}`;
+
+                    await this.fetchData({ path, cache: "reload" });
+
+                    this.searching = false;
+                },
+
+                loadMore() {
+                    if (!this.next_page_uri || this.loading_more) {
+                        return;
+                    }
+
+                    this.loading_more = true;
+
+                    setTimeout(async () => {
+                        await this.fetchData({ path: this.next_page_uri, appendResults: true });
+
+                        this.loading_more = false;
+                    }, 500);
+                },
+
+                duration(val) {
+                    return val + "s";
+                },
+
+                price(record) {
+                    return `${record.price_unit} ${record.price}`;
+                },
+
+                localDate(dtStr) {
+                    return localDate(dtStr);
+                }
+            },
+        };
+
         // routing
         const routes = [
             { path: "/", name: "Auth", component: Auth, meta: { icon: "key" } },
-            { path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: { icon: "face" } },
+            { path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: { icon: "phone" } },
             { path: "/message-history", name: "Message history", component: MessageHistory, meta: { icon: "speaker_notes" } },
-            { path: "/voice-call-history", name: "Voice call history", templateID: "voice-call-history", meta: { icon: "settings_voice" } }
+            { path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: { icon: "settings_voice" } }
         ];
 
         const router = createRouter({
