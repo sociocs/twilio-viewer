@@ -1,11 +1,12 @@
 <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Easy viewing of Twilio account, subaccounts, and related resources.">
     <title>Twilio Viewer</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
@@ -72,8 +73,8 @@
                                         :rules="[v => !!v || 'Required.']"></v-text-field>
                                     <v-text-field v-model="form.auth_token" label="Auth token"
                                         :rules="[v => !!v || 'Required.']"></v-text-field>
-                                    <v-btn type="submit" class="mt-2" color="primary"
-                                        :loading="processing">Connect</v-btn>
+                                    <v-btn type="submit" class="mt-2" color="primary" :loading="processing"
+                                        :disabled="processing">Connect</v-btn>
                                 </v-form>
                             </v-sheet>
                             <v-sheet v-if="connect_result.account_info" class="pa-1">
@@ -94,8 +95,8 @@
                                         <v-form @submit.prevent="saveConnection">
                                             <v-text-field v-model="form.connection_name" label="Connection name"
                                                 :rules="[v => !!v || 'Required.']"></v-text-field>
-                                            <v-btn type="submit" class="mt-2" color="primary"
-                                                :loading="processing">Save</v-btn>
+                                            <v-btn type="submit" class="mt-2" color="primary" :loading="processing"
+                                                :disabled="processing">Save</v-btn>
                                         </v-form>
                                     </v-card-text>
                                 </v-card>
@@ -148,7 +149,8 @@
     <template id="phone-numbers">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" @click="refreshPhoneNumbers('reload')" title="Refresh">
+                <v-btn icon :loading="loading" :disabled="loading" @click="refreshPhoneNumbers('reload')"
+                    title="Refresh">
                     <span class="material-icons">
                         cached
                     </span>
@@ -179,8 +181,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="r in records">
-                            <td>{{r.sid}}</td>
+                        <tr v-for="r in records" :key="r.sid">
+                            <td>
+                                <div style="max-width: 100px;" class="text-truncate" :title="r.sid">
+                                    {{r.sid}}
+                                </div>
+                            </td>
                             <td>{{r.phone_number}}</td>
                             <td>
                                 <v-list lines="one" density="compact" variant="text" class="py-0">
@@ -190,11 +196,11 @@
                             <td>
                                 <v-list lines="one" density="compact" variant="text" class="py-0">
                                     <v-list-item v-for="url in urls(r)" :key="url.label" :title="url.label"
-                                        :subtitle="url.value" class="px-0"></v-list-item>
+                                        :subtitle="url.value" class="px-0 text-truncate"></v-list-item>
                                 </v-list>
                             </td>
                             <td>{{r.status}}</td>
-                            <td>{{r.date_created}}</td>
+                            <td :title="r.date_created">{{localDate(r.date_created)}}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -202,9 +208,102 @@
         </v-main>
     </template>
 
-    <template id="message-logs">Message logs</template>
+    <template id="message-history">
+        <v-app-bar :title="$route.name">
+            <template v-slot:append>
+                <v-btn icon :loading="loading" :disabled="loading" @click="refreshMessageHistory('reload')"
+                    title="Refresh">
+                    <span class="material-icons">
+                        cached
+                    </span>
+                </v-btn>
+            </template>
+        </v-app-bar>
 
-    <template id="voice-call-logs">Voice call logs</template>
+        <v-main>
+            <v-sheet v-if="loading" class="text-center pa-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+            <v-sheet v-else-if="error" class="pa-4">
+                <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
+            </v-sheet>
+            <v-sheet v-else>
+                <v-container>
+                    <v-form @submit.prevent="search">
+                        <v-row align="center">
+                            <v-col>
+                                <v-text-field v-model="form.from" label="From number" hide-details="auto"
+                                    density="compact" placeholder="e.g. 16319999998"></v-text-field>
+                            </v-col>
+
+                            <v-col>
+                                <v-text-field v-model="form.to" label="To number" hide-details="auto" density="compact"
+                                    placeholder="e.g. 16319999999"></v-text-field>
+                            </v-col>
+
+                            <v-col>
+                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto"
+                                    density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
+                            </v-col>
+
+                            <v-col>
+                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto"
+                                    density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
+                            </v-col>
+
+                            <v-col cols="12" md="1">
+                                <v-btn type="submit" variant="outlined" color="primary" :loading="searching"
+                                    :disabled="searching">Search</v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-form>
+                </v-container>
+
+                <v-sheet v-if="!records?.length" class="text-center pa-4">
+                    <v-alert text="There are no records available."></v-alert>
+                </v-sheet>
+
+                <table v-else is="vue:v-table">
+                    <thead>
+                        <tr>
+                            <th>SID</th>
+                            <th>Direction</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Body</th>
+                            <th>Segments</th>
+                            <th>Status</th>
+                            <th>Price</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="r in records" :key="r.sid">
+                            <td>
+                                <div style="max-width: 100px;" class="text-truncate" :title="r.sid">
+                                    {{r.sid}}
+                                </div>
+                            </td>
+                            <td>{{r.direction}}</td>
+                            <td>{{r.from}}</td>
+                            <td>{{r.to}}</td>
+                            <td>{{r.body}}</td>
+                            <td>{{r.num_segments}}</td>
+                            <td>{{r.status}}</td>
+                            <td>{{price(r)}}</td>
+                            <td :title="r.date_updated">{{localDate(r.date_updated)}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <v-layout v-if="next_page_uri" v-intersect="loadMore">
+                    <v-progress-linear indeterminate height="6"></v-progress-linear>
+                </v-layout>
+            </v-sheet>
+        </v-main>
+    </template>
+
+    <template id="voice-call-history">Voice call history</template>
 
     <script type="importmap">
         { "imports": {
@@ -252,7 +351,7 @@
         // when credentials are not passed, reads it from the store
         async function callTwilioAPI({ path, method, body, authCredentials, cache }) {
             try {
-                const resp = await fetch(`https://api.twilio.com/2010-04-01${path}`, {
+                const resp = await fetch(`https://api.twilio.com${path}`, {
                     method: method || "GET",
                     mode: "cors",
                     cache: cache || "force-cache",
@@ -271,6 +370,10 @@
             } catch (error) {
                 return [error, null];
             }
+        }
+
+        function localDate(dtStr) {
+            return (new Date(dtStr)).toLocaleString();
         }
 
         // auth component
@@ -347,7 +450,7 @@
                     this.processing = true;
                     this.connect_result = {};
 
-                    const [error, result] = await callTwilioAPI({ path: `/Accounts/${this.form.account_sid}.json`, authCredentials: this.form, cache: "reload" });
+                    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${this.form.account_sid}.json`, authCredentials: this.form, cache: "reload" });
 
                     if (error) {
                         this.connect_result.error = error;
@@ -417,7 +520,7 @@
                 async refreshPhoneNumbers(cache) {
                     this.loading = true;
 
-                    const [error, result] = await callTwilioAPI({ path: `/Accounts/${store.account_sid}/IncomingPhoneNumbers.json`, cache: cache });
+                    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${store.account_sid}/IncomingPhoneNumbers.json`, cache: cache });
 
                     if (error) {
                         this.error = error;
@@ -434,6 +537,118 @@
 
                 capabilities(obj) {
                     return toLabelValArray(obj, ["sms", "mms", "voice"]);
+                },
+
+                localDate(dtStr) {
+                    return localDate(dtStr);
+                }
+            },
+        };
+
+        // message history component
+        const MessageHistory = {
+            template: "#message-history",
+
+            data() {
+                return {
+                    loading: true,
+                    searching: false,
+                    form: {
+                        from: "",
+                        to: "",
+                        from_date: "",
+                        to_date: "",
+                    },
+                    error: "",
+                    records: [],
+                    page_size: 20,
+                    next_page_uri: "",
+                };
+            },
+
+            async created() {
+                this.refreshMessageHistory();
+            },
+
+            methods: {
+                async refreshMessageHistory(cache, nextPageUrl) {
+                    this.loading = true;
+
+                    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}`, cache: cache });
+
+                    if (error) {
+                        this.error = error;
+                        this.next_page_uri = "";
+                    } else {
+                        this.records = result.messages;
+                        this.next_page_uri = result.next_page_uri;
+                    }
+
+                    this.loading = false;
+                },
+
+                async search() {
+                    const form = this.form;
+
+                    if (!form.from && !form.to && !form.from_date && !form.to_date) {
+                        return this.refreshMessageHistory();
+                    }
+
+                    this.next_page_uri = "";
+                    this.searching = true;
+
+                    const searchList = [];
+                    if (form.from) {
+                        searchList.push(`From=${form.from}`);
+                    }
+                    if (form.to) {
+                        searchList.push(`To=${form.to}`);
+                    }
+                    if (form.from_date) {
+                        searchList.push(`DateSent>=${form.from_date}`);
+                    }
+                    if (form.to_date) {
+                        searchList.push(`DateSent<=${form.to_date}`);
+                    }
+                    const searchStr = searchList.join("&");
+
+                    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
+
+                    if (error) {
+                        this.error = error;
+                        this.next_page_uri = "";
+                    } else {
+                        this.records = result.messages;
+                        this.next_page_uri = result.next_page_uri;
+                    }
+
+                    this.searching = false;
+                },
+
+                loadMore() {
+                    if (!this.next_page_uri) {
+                        return;
+                    }
+
+                    setTimeout(async () => {
+                        const [error, result] = await callTwilioAPI({ path: this.next_page_uri });
+
+                        if (error) {
+                            this.error = error;
+                            this.next_page_uri = "";
+                        } else {
+                            result.messages.forEach(x => this.records.push(x));
+                            this.next_page_uri = result.next_page_uri;
+                        }
+                    }, 500);
+                },
+
+                price(record) {
+                    return `${record.price_unit} ${record.price}`;
+                },
+
+                localDate(dtStr) {
+                    return localDate(dtStr);
                 }
             },
         };
@@ -441,9 +656,9 @@
         // routing
         const routes = [
             { path: "/", name: "Auth", component: Auth, meta: { icon: "key" } },
-            { path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, icon: "phone", meta: { icon: "face" } },
-            { path: "/message-logs", name: "Message logs", templateID: "message-logs", meta: { icon: "speaker_notes" } },
-            { path: "/voice-call-logs", name: "Voice call logs", templateID: "voice-call-logs", meta: { icon: "settings_voice" } }
+            { path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: { icon: "face" } },
+            { path: "/message-history", name: "Message history", component: MessageHistory, meta: { icon: "speaker_notes" } },
+            { path: "/voice-call-history", name: "Voice call history", templateID: "voice-call-history", meta: { icon: "settings_voice" } }
         ];
 
         const router = createRouter({
@@ -469,7 +684,7 @@
             },
 
             methods: {
-                reloadWebsite(){
+                reloadWebsite() {
                     location.replace("/");
                 },
             },
