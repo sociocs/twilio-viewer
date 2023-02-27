@@ -480,6 +480,71 @@
         </v-main>
     </template>
 
+    <template id="events">
+        <v-app-bar :title="$route.name">
+            <template v-slot:append>
+                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
+                    <span class="material-icons">
+                        cached
+                    </span>
+                </v-btn>
+            </template>
+        </v-app-bar>
+
+        <v-main>
+            <v-sheet v-if="loading" class="text-center pa-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+            <v-sheet v-else-if="error" class="pa-4">
+                <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
+            </v-sheet>
+            <v-sheet v-else>
+                <v-sheet v-if="!records?.length" class="text-center pa-4">
+                    <v-alert text="There are no records available."></v-alert>
+                </v-sheet>
+
+                <table v-else is="vue:v-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Event type</th>
+                            <th>Resource SID</th>
+                            <th>Date</th>
+                            <th class="text-center">Source</th>
+                            <th>Actor</th>
+                            <th>Description</th>
+                            <th>More info</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="r in records" :key="r.sid">
+                            <td class="text-center">{{r.event_type}}</td>
+                            <td>
+                                <div style="max-width: 100px;" class="text-truncate" :title="r.resource_sid">
+                                    {{r.resource_sid}}
+                                </div>
+                            </td>
+                            <td title="r.event_date">{{localDate(r.event_date)}}</td>
+                            <td class="text-center">{{r.source}}</td>
+                            <td>{{actor(r)}}</td>
+                            <td>{{r.description}}</td>
+                            <td>
+                                <v-list lines="one" density="compact" variant="text" class="py-0">
+                                    <v-list-item v-for="item in eventDataItems(r.event_data)" :key="item.label"
+                                        :title="item.label" :subtitle="item.value"
+                                        class="px-0 text-truncate"></v-list-item>
+                                </v-list>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <v-layout v-if="next_page_url" v-intersect="loadMore">
+                    <v-progress-linear indeterminate height="6"></v-progress-linear>
+                </v-layout>
+            </v-sheet>
+        </v-main>
+    </template>
+
     <script type="importmap">
         { "imports": {
             "vue":        "https://cdn.jsdelivr.net/npm/vue@3.2.47/dist/vue.esm-browser.js",
@@ -516,11 +581,30 @@
             for (let i = 0; i < keys?.length; i++) {
                 const key = keys[i];
 
-                result.push({ label: key, value: object[key]?.toString() || "None" });
+                result.push({ label: key.toString(), value: object[key]?.toString() || "None" });
             }
 
             return result;
         }
+
+        // converts a nested object to flat one, useful when rendering data
+        const flattenObject = (ob) => {
+            let result = {};
+
+            for (const i in ob) {
+                if (typeof ob[i] === 'object' && !Array.isArray(ob[i])) {
+                    const temp = flattenObject(ob[i]);
+                    for (const j in temp) {
+                        result[i + '.' + j] = temp[j];
+                    }
+                }
+                else {
+                    result[i] = ob[i];
+                }
+            }
+
+            return result;
+        };
 
         // calls given Twilio API path
         // when credentials are not passed, reads it from the store
@@ -1049,13 +1133,98 @@
             },
         };
 
+        // events component
+        const Events = {
+            template: "#events",
+
+            data() {
+                return {
+                    loading: true,
+                    loading_more: false,
+                    error: "",
+                    records: [],
+                    page_size: 20,
+                    next_page_url: "",
+                };
+            },
+
+            async created() {
+                this.refresh();
+            },
+
+            methods: {
+                async fetchData({ baseUrl, path, cache, appendResults }) {
+                    const [error, result] = await callTwilioAPI({ baseUrl, path, cache });
+
+                    if (error) {
+                        this.error = error;
+                        this.next_page_url = "";
+                    } else {
+                        if (appendResults) {
+                            result.events.forEach(x => this.records.push(x));
+                        } else {
+                            this.records = result.events;
+                        }
+                        this.next_page_url = result.meta?.next_page_url;
+                    }
+                },
+
+                async refresh(cache) {
+                    this.loading = true;
+
+                    await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${store.account_sid}&PageSize=${this.page_size}`, cache: cache });
+
+                    this.loading = false;
+                },
+
+                loadMore() {
+                    if (!this.next_page_url || this.loading_more) {
+                        return;
+                    }
+
+                    this.loading_more = true;
+
+                    setTimeout(async () => {
+                        await this.fetchData({ baseUrl: this.next_page_url, path: "", appendResults: true });
+
+                        this.loading_more = false;
+                    }, 500);
+                },
+
+                localDate(dtStr) {
+                    return localDate(dtStr);
+                },
+
+                actor(record) {
+                    let result = record.actor_type;
+
+                    if (record.actor_sid) {
+                        result += " - " + record.actor_sid;
+                    }
+
+                    return result;
+                },
+
+                eventDataItems(val) {
+                    if (!val) {
+                        return [{ value: "None" }];
+                    }
+
+                    const flatObj = flattenObject(val);
+
+                    return toLabelValArray(flatObj, Object.keys(flatObj));
+                }
+            },
+        };
+
         // routing
         const routes = [
             { path: "/", name: "Auth", component: Auth, meta: { icon: "key" } },
             { path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: { icon: "phone" } },
             { path: "/message-history", name: "Message history", component: MessageHistory, meta: { icon: "speaker_notes" } },
             { path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: { icon: "settings_voice" } },
-            { path: "/alerts", name: "Alerts", component: Alerts, meta: { icon: "error" } }
+            { path: "/alerts", name: "Alerts", component: Alerts, meta: { icon: "error" } },
+            { path: "/events", name: "Events", component: Events, meta: { icon: "change_history" } }
         ];
 
         const router = createRouter({
