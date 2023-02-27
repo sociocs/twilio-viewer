@@ -499,6 +499,37 @@
                 <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
             </v-sheet>
             <v-sheet v-else>
+                <v-container>
+                    <v-form @submit.prevent="search">
+                        <v-row align="center">
+                            <v-col>
+                                <v-text-field v-model="form.event_type" label="Event type" hide-details="auto"
+                                    density="compact" placeholder="e.g. phone-number.updated"></v-text-field>
+                            </v-col>
+
+                            <v-col cols="12" md="4">
+                                <v-text-field v-model="form.resource_sid" label="Resource SID" hide-details="auto" density="compact"
+                                    placeholder="e.g. PN12345..."></v-text-field>
+                            </v-col>
+
+                            <v-col cols="12" md="2">
+                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto"
+                                    density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
+                            </v-col>
+
+                            <v-col cols="12" md="2">
+                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto"
+                                    density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
+                            </v-col>
+
+                            <v-col cols="12" md="1">
+                                <v-btn type="submit" variant="outlined" color="primary" :loading="searching"
+                                    :disabled="searching">Search</v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-form>
+                </v-container>
+
                 <v-sheet v-if="!records?.length" class="text-center pa-4">
                     <v-alert text="There are no records available."></v-alert>
                 </v-sheet>
@@ -1141,6 +1172,13 @@
                 return {
                     loading: true,
                     loading_more: false,
+                    searching: false,
+                    form: {
+                        event_type: "",
+                        resource_sid: "",
+                        from_date: "",
+                        to_date: "",
+                    },
                     error: "",
                     records: [],
                     page_size: 20,
@@ -1175,6 +1213,36 @@
                     await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${store.account_sid}&PageSize=${this.page_size}`, cache: cache });
 
                     this.loading = false;
+                },
+
+                async search() {
+                    const form = this.form;
+
+                    if (!form.event_type && !form.resource_sid && !form.from_date && !form.to_date) {
+                        return this.refresh();
+                    }
+
+                    this.next_page_url = "";
+                    this.searching = true;
+
+                    const searchList = [];
+                    if (form.event_type) {
+                        searchList.push(`EventType=${form.event_type}`);
+                    }
+                    if (form.resource_sid) {
+                        searchList.push(`ResourceSid=${form.resource_sid}`);
+                    }
+                    if (form.from_date) {
+                        searchList.push(`StartDate>=${form.from_date}`);
+                    }
+                    if (form.to_date) {
+                        searchList.push(`EndDate<=${form.to_date}`);
+                    }
+                    const searchStr = searchList.join("&");
+
+                    await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${store.account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
+
+                    this.searching = false;
                 },
 
                 loadMore() {
