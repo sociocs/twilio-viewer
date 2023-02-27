@@ -121,10 +121,11 @@
                                             <th>Account SID</th>
                                             <th>Name</th>
                                             <th></th>
+                                            <th></th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="connection in saved_connections">
+                                        <tr v-for="connection in saved_connections" :key="connection.account_sid">
                                             <td>{{connection.account_sid}}</td>
                                             <td>{{connection.name}}</td>
                                             <td class="text-center">
@@ -137,6 +138,15 @@
                                                         @click.prevent.stop="switchConnection(connection.account_sid)"
                                                         title="Switch to this account.">Use</a>
                                                 </span>
+                                            </td>
+                                            <td>
+                                                <v-btn icon variant="flat" title="Remove account."
+                                                    @click="removeConnection(connection.account_sid)"
+                                                    :loading="removing" :disabled="removing">
+                                                    <span class="material-icons text-red">
+                                                        delete
+                                                    </span>
+                                                </v-btn>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -482,6 +492,8 @@
                     tab: "new",
                     loading: true,
                     processing: false,
+                    removeConfirmationDialog: false,
+                    removing: false,
                     form: {
                         account_sid: "",
                         auth_token: "",
@@ -520,8 +532,8 @@
 
                     if (connections?.length) {
                         const connectionInUse = connections.find(x => x.in_use === true);
-                        store.account_sid = connectionInUse.account_sid;
-                        store.auth_token = connectionInUse.auth_token;
+                        store.account_sid = connectionInUse?.account_sid;
+                        store.auth_token = connectionInUse?.auth_token;
                     }
 
                     this.saved_connections = connections || [];
@@ -592,6 +604,31 @@
 
                     // refresh connections locally
                     await this.refreshSavedConnections();
+                },
+
+                async removeConnection(accountSid) {
+                    this.removing = true;
+
+                    // read the connection to check if it's currently the default
+                    const connection = await db.connections.get(accountSid);
+
+                    // delete connection
+                    await db.connections.delete(accountSid);
+
+                    // if the connection was in use, switch to another one
+                    if (connection.in_use) {
+                        // change first record by name to default
+                        await this.dbResetInUse();
+                        const newDefault = await db.connections.orderBy("name").limit(1).toArray();
+                        if (newDefault?.length) {
+                            await db.connections.update(newDefault[0].account_sid, { in_use: true });
+                        }
+                    }
+
+                    // refresh connections locally
+                    await this.refreshSavedConnections();
+
+                    this.removing = false;
                 }
             },
         };
