@@ -99,6 +99,8 @@
                                 </v-card>
                                 <v-card title="Save connection" class="mt-4">
                                     <v-card-text>
+                                        <v-alert text="Note: Twilio account SID and auth token are saved in plain text in your browser's database." type="warning" :icon="false" class="mb-3"></v-alert>
+
                                         <v-form @submit.prevent="saveConnection">
                                             <v-text-field v-model="form.connection_name" label="Connection name"
                                                 :rules="[v => !!v || 'Required.']"></v-text-field>
