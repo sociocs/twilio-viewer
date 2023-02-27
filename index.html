@@ -5,8 +5,10 @@
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Easy viewing of Twilio account, subaccounts, and related resources.">
+    <meta name="description"
+        content="Easy viewing of Twilio accounts, subaccounts, and related resources (such as messages, and voice calls history).">
     <title>Twilio Viewer</title>
+    <link rel="icon" type="image/png" href="/icon.png" />
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
@@ -26,6 +28,7 @@
                 <v-list>
                     <v-list-item @click="reloadWebsite">
                         <template v-slot:prepend>
+                            <v-img src="/icon.svg" height="32" width="32" class="me-2"></v-img>
                             <v-list-item-title style="font-size: 1.25rem;">
                                 Twilio Viewer
                             </v-list-item-title>
