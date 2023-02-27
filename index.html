@@ -166,8 +166,7 @@
     <template id="phone-numbers">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')"
-                    title="Refresh">
+                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
                     <span class="material-icons">
                         cached
                     </span>
@@ -228,8 +227,7 @@
     <template id="message-history">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')"
-                    title="Refresh">
+                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
                     <span class="material-icons">
                         cached
                     </span>
@@ -323,8 +321,7 @@
     <template id="voice-call-history">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')"
-                    title="Refresh">
+                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
                     <span class="material-icons">
                         cached
                     </span>
@@ -434,6 +431,33 @@
                 <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
             </v-sheet>
             <v-sheet v-else>
+                <v-container>
+                    <v-form @submit.prevent="search">
+                        <v-row align="center">
+                            <v-col>
+                                <v-select v-model="form.log_level" :items="log_level_options" item-title="label"
+                                    item-value="value" label="Log level" hide-details="auto" density="compact"
+                                    single-line></v-select>
+                            </v-col>
+
+                            <v-col>
+                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto"
+                                    density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
+                            </v-col>
+
+                            <v-col>
+                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto"
+                                    density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
+                            </v-col>
+
+                            <v-col cols="12" md="1">
+                                <v-btn type="submit" variant="outlined" color="primary" :loading="searching"
+                                    :disabled="searching">Search</v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-form>
+                </v-container>
+
                 <v-sheet v-if="!records?.length" class="text-center pa-4">
                     <v-alert text="There are no records available."></v-alert>
                 </v-sheet>
@@ -508,8 +532,8 @@
                             </v-col>
 
                             <v-col cols="12" md="4">
-                                <v-text-field v-model="form.resource_sid" label="Resource SID" hide-details="auto" density="compact"
-                                    placeholder="e.g. PN12345..."></v-text-field>
+                                <v-text-field v-model="form.resource_sid" label="Resource SID" hide-details="auto"
+                                    density="compact" placeholder="e.g. PN12345..."></v-text-field>
                             </v-col>
 
                             <v-col cols="12" md="2">
@@ -1080,8 +1104,21 @@
 
             data() {
                 return {
+                    log_level_options: [
+                        { label: "All levels", value: "" },
+                        { label: "Error", value: "error" },
+                        { label: "Warning", value: "warning" },
+                        { label: "Notice", value: "notice" },
+                        { label: "Debug", value: "debug" },
+                    ],
                     loading: true,
                     loading_more: false,
+                    searching: false,
+                    form: {
+                        log_level: "",
+                        from_date: "",
+                        to_date: "",
+                    },
                     error: "",
                     records: [],
                     page_size: 20,
@@ -1116,6 +1153,33 @@
                     await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSID=${store.account_sid}&PageSize=${this.page_size}`, cache: cache });
 
                     this.loading = false;
+                },
+
+                async search() {
+                    const form = this.form;
+
+                    if (!form.log_level && !form.from_date && !form.to_date) {
+                        return this.refresh();
+                    }
+
+                    this.next_page_url = "";
+                    this.searching = true;
+
+                    const searchList = [];
+                    if (form.log_level) {
+                        searchList.push(`LogLevel=${form.log_level}`);
+                    }
+                    if (form.from_date) {
+                        searchList.push(`StartDate=${form.from_date}`);
+                    }
+                    if (form.to_date) {
+                        searchList.push(`EndDate=${form.to_date}`);
+                    }
+                    const searchStr = searchList.join("&");
+
+                    await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSid=${store.account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
+
+                    this.searching = false;
                 },
 
                 loadMore() {
@@ -1233,10 +1297,10 @@
                         searchList.push(`ResourceSid=${form.resource_sid}`);
                     }
                     if (form.from_date) {
-                        searchList.push(`StartDate>=${form.from_date}`);
+                        searchList.push(`StartDate=${form.from_date}`);
                     }
                     if (form.to_date) {
-                        searchList.push(`EndDate<=${form.to_date}`);
+                        searchList.push(`EndDate=${form.to_date}`);
                     }
                     const searchStr = searchList.join("&");
 
