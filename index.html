@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description"
-        content="Easy viewing of Twilio accounts, subaccounts, and related resources (such as messages, and voice calls history).">
+        content="Easy viewing of Twilio accounts, subaccounts, and related resources (such as message, and voice call logs).">
     <title>Twilio Viewer</title>
     <link rel="icon" type="image/png" href="/icon.png" />
 
@@ -15,8 +15,13 @@
     <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
 
     <style>
-        table {
+        table,
+        table .v-list-item-subtitle {
             font-size: .85rem;
+        }
+
+        table .v-list-item-title {
+            font-size: .9rem;
         }
     </style>
 </head>
@@ -47,7 +52,6 @@
                         <v-list-item-title v-text="route.name"></v-list-item-title>
                     </v-list-item>
                 </v-list>
-
             </v-navigation-drawer>
 
             <router-view></router-view>
@@ -405,6 +409,71 @@
                     </tbody>
                 </table>
                 <v-layout v-if="next_page_uri" v-intersect="loadMore">
+                    <v-progress-linear indeterminate height="6"></v-progress-linear>
+                </v-layout>
+            </v-sheet>
+        </v-main>
+    </template>
+
+    <template id="alerts">
+        <v-app-bar :title="$route.name">
+            <template v-slot:append>
+                <v-btn icon :loading="loading" :disabled="loading" @click="refreshAlerts('reload')" title="Refresh">
+                    <span class="material-icons">
+                        cached
+                    </span>
+                </v-btn>
+            </template>
+        </v-app-bar>
+
+        <v-main>
+            <v-sheet v-if="loading" class="text-center pa-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+            <v-sheet v-else-if="error" class="pa-4">
+                <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
+            </v-sheet>
+            <v-sheet v-else>
+                <v-sheet v-if="!records?.length" class="text-center pa-4">
+                    <v-alert text="There are no records available."></v-alert>
+                </v-sheet>
+
+                <table v-else is="vue:v-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Level</th>
+                            <th>Resource SID</th>
+                            <th>Date</th>
+                            <th>Alert text</th>
+                            <th class="text-center">Error code</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="r in records" :key="r.sid">
+                            <td class="text-center">{{r.log_level}}</td>
+                            <td>
+                                <div style="max-width: 100px;" class="text-truncate" :title="r.resource_sid">
+                                    {{r.resource_sid}}
+                                </div>
+                            </td>
+                            <td title="r.date_generated">{{localDate(r.date_generated)}}</td>
+                            <td>
+                                <v-list lines="one" density="compact" variant="text" class="py-0">
+                                    <v-list-item v-for="item in alertTextTokens(r.alert_text)" :key="item.label"
+                                        :title="item.label" :subtitle="item.value"
+                                        class="px-0 text-truncate"></v-list-item>
+                                </v-list>
+                            </td>
+                            <td class="text-center">
+                                <a v-if="r.more_info" :href="r.more_info" target="_blank">{{r.error_code}}</a>
+                                <span v-else-if="r.error_code">{{r.error_code}}</span>
+                                <span v-else>None</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <v-layout v-if="next_page_url" v-intersect="loadMore">
                     <v-progress-linear indeterminate height="6"></v-progress-linear>
                 </v-layout>
             </v-sheet>
@@ -890,12 +959,103 @@
             },
         };
 
+        // alerts component
+        const Alerts = {
+            template: "#alerts",
+
+            data() {
+                return {
+                    loading: true,
+                    loading_more: false,
+                    error: "",
+                    records: [],
+                    page_size: 20,
+                    next_page_url: "",
+                };
+            },
+
+            async created() {
+                this.refreshAlerts();
+            },
+
+            methods: {
+                async fetchData({ baseUrl, path, cache, appendResults }) {
+                    const [error, result] = await callTwilioAPI({ baseUrl, path, cache });
+
+                    if (error) {
+                        this.error = error;
+                        this.next_page_url = "";
+                    } else {
+                        if (appendResults) {
+                            result.alerts.forEach(x => this.records.push(x));
+                        } else {
+                            this.records = result.alerts;
+                        }
+                        this.next_page_url = result.meta?.next_page_url;
+                    }
+                },
+
+                async refreshAlerts(cache) {
+                    this.loading = true;
+
+                    await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSID=${store.account_sid}&PageSize=${this.page_size}`, cache: cache });
+
+                    this.loading = false;
+                },
+
+                loadMore() {
+                    if (!this.next_page_url || this.loading_more) {
+                        return;
+                    }
+
+                    this.loading_more = true;
+
+                    setTimeout(async () => {
+                        await this.fetchData({ baseUrl: this.next_page_url, path: "", appendResults: true });
+
+                        this.loading_more = false;
+                    }, 500);
+                },
+
+                localDate(dtStr) {
+                    return localDate(dtStr);
+                },
+
+                alertTextTokens(val) {
+                    if (!val) {
+                        return [{ value: "None" }];
+                    }
+
+                    const tokens = val.split("&");
+
+                    if (tokens?.length) {
+                        return tokens.map(x => {
+                            const keyVal = x.split("=");
+
+                            const result = {
+                                label: keyVal[0],
+                            };
+
+                            if (keyVal.length > 1) {
+                                result.value = decodeURIComponent(keyVal[1]).replace(/\+/g, " ");
+                            }
+
+                            return result;
+                        });
+                    }
+
+                    return [{ label: val }];
+                }
+            },
+        };
+
         // routing
         const routes = [
             { path: "/", name: "Auth", component: Auth, meta: { icon: "key" } },
             { path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: { icon: "phone" } },
             { path: "/message-history", name: "Message history", component: MessageHistory, meta: { icon: "speaker_notes" } },
-            { path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: { icon: "settings_voice" } }
+            { path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: { icon: "settings_voice" } },
+            { path: "/alerts", name: "Alerts", component: Alerts, meta: { icon: "error" } }
         ];
 
         const router = createRouter({
