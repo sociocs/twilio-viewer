@@ -455,9 +455,9 @@
 
         // calls given Twilio API path
         // when credentials are not passed, reads it from the store
-        async function callTwilioAPI({ path, method, body, authCredentials, cache }) {
+        async function callTwilioAPI({ baseUrl, path, method, body, authCredentials, cache }) {
             try {
-                const resp = await fetch(`https://api.twilio.com${path}`, {
+                const resp = await fetch(`${baseUrl || "https://api.twilio.com"}${path}`, {
                     method: method || "GET",
                     mode: "cors",
                     cache: cache || "force-cache",
@@ -613,7 +613,7 @@
                     await db.connections.delete(accountSid);
 
                     // if the connection was in use, switch to another one
-                    const connection = this.saved_connections.find(x=>x.account_sid===accountSid);
+                    const connection = this.saved_connections.find(x => x.account_sid === accountSid);
                     if (connection.in_use) {
                         // change first record by name to default
                         await this.dbResetInUse();
