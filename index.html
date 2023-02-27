@@ -609,13 +609,11 @@
                 async removeConnection(accountSid) {
                     this.removing = true;
 
-                    // read the connection to check if it's currently the default
-                    const connection = await db.connections.get(accountSid);
-
                     // delete connection
                     await db.connections.delete(accountSid);
 
                     // if the connection was in use, switch to another one
+                    const connection = this.saved_connections.find(x=>x.account_sid===accountSid);
                     if (connection.in_use) {
                         // change first record by name to default
                         await this.dbResetInUse();
