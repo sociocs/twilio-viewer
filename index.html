@@ -612,7 +612,7 @@
     <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
 
     <script type="module">
-        import { createApp, reactive } from "vue";
+        import { createApp, nextTick } from "vue";
         import { createRouter, createWebHistory } from "vue-router";
         import { createVuetify } from "vuetify";
 
@@ -1363,6 +1363,19 @@
             history: createWebHistory(),
             routes: routes.map(x => ({ path: x.path, name: x.name, component: x.component || { template: `#${x.templateID}` } })),
         })
+
+        const DEFAULT_TITLE = "Twilio Viewer";
+        router.afterEach((to, from) => {
+            // Use next tick to handle router history correctly
+            // see: https://github.com/vuejs/vue-router/issues/914#issuecomment-384477609
+            nextTick(() => {
+                if (to.name === "Auth") {
+                    document.title = DEFAULT_TITLE;
+                } else {
+                    document.title = `${to.name} | ${DEFAULT_TITLE}`;
+                }
+            });
+        });
 
         // vuetify
         const vuetify = createVuetify();
