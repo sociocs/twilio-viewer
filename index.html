@@ -166,7 +166,7 @@
     <template id="phone-numbers">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refreshPhoneNumbers('reload')"
+                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')"
                     title="Refresh">
                     <span class="material-icons">
                         cached
@@ -228,7 +228,7 @@
     <template id="message-history">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refreshMessageHistory('reload')"
+                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')"
                     title="Refresh">
                     <span class="material-icons">
                         cached
@@ -323,7 +323,7 @@
     <template id="voice-call-history">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refreshVoiceCallHistory('reload')"
+                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')"
                     title="Refresh">
                     <span class="material-icons">
                         cached
@@ -418,7 +418,7 @@
     <template id="alerts">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refreshAlerts('reload')" title="Refresh">
+                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
                     <span class="material-icons">
                         cached
                     </span>
@@ -797,11 +797,11 @@
             },
 
             async created() {
-                this.refreshPhoneNumbers();
+                this.refresh();
             },
 
             methods: {
-                async refreshPhoneNumbers(cache) {
+                async refresh(cache) {
                     this.loading = true;
 
                     const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${store.account_sid}/IncomingPhoneNumbers.json`, cache: cache });
@@ -852,7 +852,7 @@
             },
 
             async created() {
-                this.refreshMessageHistory();
+                this.refresh();
             },
 
             methods: {
@@ -872,7 +872,7 @@
                     }
                 },
 
-                async refreshMessageHistory(cache) {
+                async refresh(cache) {
                     this.loading = true;
 
                     await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}`, cache: cache });
@@ -884,7 +884,7 @@
                     const form = this.form;
 
                     if (!form.from && !form.to && !form.from_date && !form.to_date) {
-                        return this.refreshMessageHistory();
+                        return this.refresh();
                     }
 
                     this.next_page_uri = "";
@@ -957,7 +957,7 @@
             },
 
             async created() {
-                this.refreshVoiceCallHistory();
+                this.refresh();
             },
 
             methods: {
@@ -977,7 +977,7 @@
                     }
                 },
 
-                async refreshVoiceCallHistory(cache) {
+                async refresh(cache) {
                     this.loading = true;
 
                     await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}`, cache: cache });
@@ -989,7 +989,7 @@
                     const form = this.form;
 
                     if (!form.from && !form.to && !form.from_date && !form.to_date) {
-                        return this.refreshVoiceCallHistory();
+                        return this.refresh();
                     }
 
                     this.next_page_uri = "";
@@ -1059,7 +1059,7 @@
             },
 
             async created() {
-                this.refreshAlerts();
+                this.refresh();
             },
 
             methods: {
@@ -1079,7 +1079,7 @@
                     }
                 },
 
-                async refreshAlerts(cache) {
+                async refresh(cache) {
                     this.loading = true;
 
                     await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSID=${store.account_sid}&PageSize=${this.page_size}`, cache: cache });
