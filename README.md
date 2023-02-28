@@ -19,6 +19,7 @@ Twilio console offers a great lot of functionality, however, it's not convenient
 ## Development stack
 
 1. Vue.js 3 (<https://vuejs.org/>)
+1. Nuxt 3 (<https://nuxt.com/>)
 1. Vuetify 3 (<https://vuetifyjs.com/en/>)
 1. Vue Router (<https://router.vuejs.org/>)
 1. Twilio REST APIs (<https://www.twilio.com/docs/usage/api>)
@@ -26,3 +27,10 @@ Twilio console offers a great lot of functionality, however, it's not convenient
 1. Dexie.js for IndexedDB (<https://dexie.org/>)
 1. Google Roboto Fonts (<https://fonts.google.com/specimen/Roboto>)
 1. Google Material Icons (<https://fonts.google.com/icons?icon.set=Material+Icons>)
+
+## To run locally
+
+1. Clone the repository
+1. cd to the project directory
+1. Run `npm install`
+1. Run `run.bat`
