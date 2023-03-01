@@ -1077,7 +1077,7 @@
                 },
 
                 price(record) {
-                    return `${record.price_unit} ${record.price}`;
+                    return `${record.price_unit} ${record.price || "-"}`;
                 },
 
                 localDate(dtStr) {
@@ -1197,7 +1197,7 @@
                 },
 
                 price(record) {
-                    return `${record.price_unit} ${record.price}`;
+                    return `${record.price_unit} ${record.price || "-"}`;
                 },
 
                 localDate(dtStr) {
