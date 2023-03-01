@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.1.96/css/materialdesignicons.min.css">
 
     <style>
         table,
@@ -45,8 +45,7 @@
                     <v-list-item v-for="(route, i) in routes" :key="i" :value="route" active-color="primary"
                         :to="route.path">
                         <template v-slot:prepend>
-                            <span
-                                class="material-icons v-icon notranslate v-theme--dark v-icon--size-default">{{route.meta.icon}}</span>
+                            <v-icon :icon="route.meta.icon"></v-icon>
                         </template>
 
                         <v-list-item-title v-text="route.name"></v-list-item-title>
@@ -99,7 +98,13 @@
                                 </v-card>
                                 <v-card title="Save connection" class="mt-4">
                                     <v-card-text>
-                                        <v-alert text="Note: Twilio account SID and auth token are saved in plain text in your browser's database." type="warning" :icon="false" class="mb-3"></v-alert>
+                                        <v-alert
+                                            text="Note: Twilio account SID and auth token are saved in plain text in your browser's database."
+                                            type="warning" :icon="false" class="mb-3"></v-alert>
+
+                                        <v-alert
+                                            text="Information for Twilio subaccounts is available only if you save the primary account."
+                                            type="success" :icon="false" class="mb-3"></v-alert>
 
                                         <v-form @submit.prevent="saveConnection">
                                             <v-text-field v-model="form.connection_name" label="Connection name"
@@ -135,10 +140,9 @@
                                             <td>{{connection.account_sid}}</td>
                                             <td>{{connection.name}}</td>
                                             <td class="text-center">
-                                                <span v-if="connection.in_use" title="Currently using this account."
-                                                    class="material-icons text-green-darken-4">
-                                                    check
-                                                </span>
+                                                <v-icon icon="mdi-check-bold" v-if="connection.in_use"
+                                                    title="Currently using this account." color="green-darken-2">
+                                                </v-icon>
                                                 <span v-else>
                                                     <a href="#"
                                                         @click.prevent.stop="switchConnection(connection.account_sid)"
@@ -146,12 +150,10 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <v-btn icon variant="flat" title="Remove account."
+                                                <v-btn size="x-small" icon="mdi-delete" color="red"
+                                                    title="Remove account."
                                                     @click="removeConnection(connection.account_sid)"
                                                     :loading="removing" :disabled="removing">
-                                                    <span class="material-icons text-red">
-                                                        delete
-                                                    </span>
                                                 </v-btn>
                                             </td>
                                         </tr>
@@ -168,10 +170,15 @@
     <template id="phone-numbers">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
-                    <span class="material-icons">
-                        cached
-                    </span>
+                <v-autocomplete class="mr-2" label="Account" hide-details="auto" density="compact"
+                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo">
+                    <template v-slot:item="{ props, item }">
+                        <v-list-item v-bind="props" :title="item?.raw?.name" :subtitle="item?.raw?.sid"></v-list-item>
+                    </template>
+                </v-autocomplete>
+
+                <v-btn icon="mdi-cached" :loading="loading" :disabled="loading" @click="refresh('reload')"
+                    title="Refresh">
                 </v-btn>
             </template>
         </v-app-bar>
@@ -229,10 +236,14 @@
     <template id="message-history">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
-                    <span class="material-icons">
-                        cached
-                    </span>
+                <v-autocomplete class="mr-2" label="Account" hide-details="auto" density="compact"
+                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo">
+                    <template v-slot:item="{ props, item }">
+                        <v-list-item v-bind="props" :title="item?.raw?.name" :subtitle="item?.raw?.sid"></v-list-item>
+                    </template>
+                </v-autocomplete>
+                <v-btn icon="mdi-cached" :loading="loading" :disabled="loading" @click="refresh('reload')"
+                    title="Refresh">
                 </v-btn>
             </template>
         </v-app-bar>
@@ -323,10 +334,14 @@
     <template id="voice-call-history">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
-                    <span class="material-icons">
-                        cached
-                    </span>
+                <v-autocomplete class="mr-2" label="Account" hide-details="auto" density="compact"
+                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo">
+                    <template v-slot:item="{ props, item }">
+                        <v-list-item v-bind="props" :title="item?.raw?.name" :subtitle="item?.raw?.sid"></v-list-item>
+                    </template>
+                </v-autocomplete>
+                <v-btn icon="mdi-cached" :loading="loading" :disabled="loading" @click="refresh('reload')"
+                    title="Refresh">
                 </v-btn>
             </template>
         </v-app-bar>
@@ -417,10 +432,12 @@
     <template id="alerts">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
-                    <span class="material-icons">
-                        cached
-                    </span>
+                <v-select class="mr-2" label="Account" hide-details="auto" density="compact"
+                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo"
+                    :disabled="true">
+                </v-select>
+                <v-btn icon="mdi-cached" :loading="loading" :disabled="loading" @click="refresh('reload')"
+                    title="Refresh">
                 </v-btn>
             </template>
         </v-app-bar>
@@ -509,10 +526,12 @@
     <template id="events">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
-                <v-btn icon :loading="loading" :disabled="loading" @click="refresh('reload')" title="Refresh">
-                    <span class="material-icons">
-                        cached
-                    </span>
+                <v-select class="mr-2" label="Account" hide-details="auto" density="compact"
+                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo"
+                    :disabled="true">
+                </v-select>
+                <v-btn icon="mdi-cached" :loading="loading" :disabled="loading" @click="refresh('reload')"
+                    title="Refresh">
                 </v-btn>
             </template>
         </v-app-bar>
@@ -614,21 +633,31 @@
     <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
 
     <script type="module">
-        import { createApp, nextTick } from "vue";
-        import { createRouter, createWebHistory } from "vue-router";
-        import { createVuetify } from "vuetify";
+        import {createApp, nextTick} from "vue";
+        import {createRouter, createWebHistory} from "vue-router";
+        import {createVuetify} from "vuetify";
 
         const db = new Dexie("twilio-viewer-db");
 
         // db schema
-        db.version(1).stores({
+        db.version(2).stores({
             connections: `account_sid,name`,
+            subaccounts: `sid,owner_account_sid,name`,
         });
 
         // a basic store for shared data
         const store = {
             account_sid: "",
+            active_account_sid: "",
             auth_token: "",
+            connection_name: "",
+            subaccounts: [],
+            getActiveAccountSid() {
+                return this.active_account_sid || this.account_sid;
+            },
+            getAccounts() {
+                return [{sid: this.account_sid, name: this.connection_name}].concat(this.subaccounts);
+            },
         };
 
         // converts an object to array of label value pair
@@ -638,7 +667,7 @@
             for (let i = 0; i < keys?.length; i++) {
                 const key = keys[i];
 
-                result.push({ label: key.toString(), value: object[key]?.toString() || "None" });
+                result.push({label: key.toString(), value: object[key]?.toString() || "None"});
             }
 
             return result;
@@ -665,7 +694,7 @@
 
         // calls given Twilio API path
         // when credentials are not passed, reads it from the store
-        async function callTwilioAPI({ baseUrl, path, method, body, authCredentials, cache }) {
+        async function callTwilioAPI({baseUrl, path, method, body, authCredentials, cache}) {
             try {
                 const resp = await fetch(`${baseUrl || "https://api.twilio.com"}${path}`, {
                     method: method || "GET",
@@ -698,7 +727,7 @@
 
             data() {
                 return {
-                    appBarActions: [{ icon: "key" }],
+                    appBarActions: [{icon: "key"}],
                     tab: "new",
                     loading: true,
                     processing: false,
@@ -738,19 +767,26 @@
 
             methods: {
                 async refreshSavedConnections() {
+                    // primary connection
                     const connections = await db.connections.orderBy("name").toArray();
 
                     if (connections?.length) {
                         const connectionInUse = connections.find(x => x.in_use === true);
                         store.account_sid = connectionInUse?.account_sid;
                         store.auth_token = connectionInUse?.auth_token;
+                        store.connection_name = connectionInUse?.name;
                     }
 
                     this.saved_connections = connections || [];
+
+                    // accounts
+                    if (store.account_sid) {
+                        store.subaccounts = await db.subaccounts.where({owner_account_sid: store.account_sid}).sortBy("name");
+                    }
                 },
 
                 async dbResetInUse() {
-                    await db.connections.toCollection().modify({ in_use: false });
+                    await db.connections.toCollection().modify({in_use: false});
                 },
 
                 resetFormData() {
@@ -768,7 +804,7 @@
                     this.processing = true;
                     this.connect_result = {};
 
-                    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${this.form.account_sid}.json`, authCredentials: this.form, cache: "reload" });
+                    const [error, result] = await callTwilioAPI({path: `/2010-04-01/Accounts/${this.form.account_sid}.json`, authCredentials: this.form, cache: "reload"});
 
                     if (error) {
                         this.connect_result.error = error;
@@ -778,6 +814,31 @@
                         this.form.connection_name = result.friendly_name;
                         store.account_sid = this.form.account_sid;
                         store.auth_token = this.form.auth_token;
+                        store.connection_name = this.form.connection_name;
+
+                        // fetch subaccounts
+                        const [error1, result1] = await callTwilioAPI({path: `/2010-04-01/Accounts.json`, authCredentials: this.form, cache: "reload"});
+                        if (error1) {
+                            this.connect_result.error = error1;
+                        } else {
+                            this.connect_result.account_info.push({
+                                label: "subaccount_count",
+                                value: result1.accounts?.length,
+                            });
+                            for (let i = 0; i < result1.accounts?.length; i++) {
+                                const account = result1.accounts[i];
+
+                                if (account.sid !== account.owner_account_sid) {
+                                    store.subaccounts.push({
+                                        sid: account.sid,
+                                        owner_account_sid: account.owner_account_sid,
+                                        name: account.friendly_name,
+                                        status: account.status,
+                                        created_at: Date.now(),
+                                    });
+                                }
+                            }
+                        }
                     }
 
                     this.processing = false;
@@ -792,8 +853,13 @@
                     await this.dbResetInUse();
 
                     // save connection
-                    const connection = { account_sid: this.form.account_sid, auth_token: this.form.auth_token, name: this.form.connection_name, in_use: true, created_at: Date.now() };
-                    await db.connections.put(connection, "account_sid");
+                    const connection = {account_sid: store.account_sid, auth_token: store.auth_token, name: this.form.connection_name, in_use: true, created_at: Date.now()};
+                    await db.connections.put(connection);
+
+                    // save subaccounts
+                    if (store.subaccounts) {
+                        await db.subaccounts.bulkPut(store.subaccounts);
+                    }
 
                     // refresh connections locally
                     await this.refreshSavedConnections();
@@ -810,7 +876,7 @@
                     await this.dbResetInUse();
 
                     // update in_use in the db for the selected connection
-                    await db.connections.update(accountSid, { in_use: true });
+                    await db.connections.update(accountSid, {in_use: true});
 
                     // refresh connections locally
                     await this.refreshSavedConnections();
@@ -829,7 +895,7 @@
                         await this.dbResetInUse();
                         const newDefault = await db.connections.orderBy("name").limit(1).toArray();
                         if (newDefault?.length) {
-                            await db.connections.update(newDefault[0].account_sid, { in_use: true });
+                            await db.connections.update(newDefault[0].account_sid, {in_use: true});
                         }
                     }
 
@@ -850,18 +916,30 @@
                     loading: true,
                     error: "",
                     records: [],
+                    active_account_sid: store.getActiveAccountSid(),
+                    accounts: store.getAccounts(),
                 };
             },
 
             async created() {
+                // refresh data from api
                 this.refresh();
+            },
+
+            watch: {
+                active_account_sid(newValue) {
+                    this.active_account_sid = store.active_account_sid = newValue;
+
+                    // refresh data from api
+                    this.refresh();
+                }
             },
 
             methods: {
                 async refresh(cache) {
                     this.loading = true;
 
-                    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${store.account_sid}/IncomingPhoneNumbers.json`, cache: cache });
+                    const [error, result] = await callTwilioAPI({path: `/2010-04-01/Accounts/${this.active_account_sid}/IncomingPhoneNumbers.json`, cache: cache});
 
                     if (error) {
                         this.error = error;
@@ -905,6 +983,8 @@
                     records: [],
                     page_size: 20,
                     next_page_uri: "",
+                    active_account_sid: store.getActiveAccountSid(),
+                    accounts: store.getAccounts(),
                 };
             },
 
@@ -912,9 +992,18 @@
                 this.refresh();
             },
 
+            watch: {
+                active_account_sid(newValue) {
+                    this.active_account_sid = store.active_account_sid = newValue;
+
+                    // refresh data from api
+                    this.refresh();
+                }
+            },
+
             methods: {
-                async fetchData({ path, cache, appendResults }) {
-                    const [error, result] = await callTwilioAPI({ path, cache });
+                async fetchData({path, cache, appendResults}) {
+                    const [error, result] = await callTwilioAPI({path, cache});
 
                     if (error) {
                         this.error = error;
@@ -932,7 +1021,7 @@
                 async refresh(cache) {
                     this.loading = true;
 
-                    await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}`, cache: cache });
+                    await this.fetchData({path: `/2010-04-01/Accounts/${this.active_account_sid}/Messages.json?PageSize=${this.page_size}`, cache: cache});
 
                     this.loading = false;
                 },
@@ -962,7 +1051,7 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
+                    await this.fetchData({path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
 
                     this.searching = false;
                 },
@@ -975,7 +1064,7 @@
                     this.loading_more = true;
 
                     setTimeout(async () => {
-                        await this.fetchData({ path: this.next_page_uri, appendResults: true });
+                        await this.fetchData({path: this.next_page_uri, appendResults: true});
 
                         this.loading_more = false;
                     }, 500);
@@ -1010,6 +1099,8 @@
                     records: [],
                     page_size: 20,
                     next_page_uri: "",
+                    active_account_sid: store.getActiveAccountSid(),
+                    accounts: store.getAccounts(),
                 };
             },
 
@@ -1017,9 +1108,18 @@
                 this.refresh();
             },
 
+            watch: {
+                active_account_sid(newValue) {
+                    this.active_account_sid = store.active_account_sid = newValue;
+
+                    // refresh data from api
+                    this.refresh();
+                }
+            },
+
             methods: {
-                async fetchData({ path, cache, appendResults }) {
-                    const [error, result] = await callTwilioAPI({ path, cache });
+                async fetchData({path, cache, appendResults}) {
+                    const [error, result] = await callTwilioAPI({path, cache});
 
                     if (error) {
                         this.error = error;
@@ -1037,7 +1137,7 @@
                 async refresh(cache) {
                     this.loading = true;
 
-                    await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}`, cache: cache });
+                    await this.fetchData({path: `/2010-04-01/Accounts/${this.active_account_sid}/Calls.json?PageSize=${this.page_size}`, cache: cache});
 
                     this.loading = false;
                 },
@@ -1067,7 +1167,7 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    await this.fetchData({ path: `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
+                    await this.fetchData({path: `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
 
                     this.searching = false;
                 },
@@ -1080,7 +1180,7 @@
                     this.loading_more = true;
 
                     setTimeout(async () => {
-                        await this.fetchData({ path: this.next_page_uri, appendResults: true });
+                        await this.fetchData({path: this.next_page_uri, appendResults: true});
 
                         this.loading_more = false;
                     }, 500);
@@ -1107,11 +1207,11 @@
             data() {
                 return {
                     log_level_options: [
-                        { label: "All levels", value: "" },
-                        { label: "Error", value: "error" },
-                        { label: "Warning", value: "warning" },
-                        { label: "Notice", value: "notice" },
-                        { label: "Debug", value: "debug" },
+                        {label: "All levels", value: ""},
+                        {label: "Error", value: "error"},
+                        {label: "Warning", value: "warning"},
+                        {label: "Notice", value: "notice"},
+                        {label: "Debug", value: "debug"},
                     ],
                     loading: true,
                     loading_more: false,
@@ -1125,6 +1225,8 @@
                     records: [],
                     page_size: 20,
                     next_page_url: "",
+                    active_account_sid: store.account_sid,
+                    accounts: store.getAccounts(),
                 };
             },
 
@@ -1133,8 +1235,8 @@
             },
 
             methods: {
-                async fetchData({ baseUrl, path, cache, appendResults }) {
-                    const [error, result] = await callTwilioAPI({ baseUrl, path, cache });
+                async fetchData({baseUrl, path, cache, appendResults}) {
+                    const [error, result] = await callTwilioAPI({baseUrl, path, cache});
 
                     if (error) {
                         this.error = error;
@@ -1152,7 +1254,7 @@
                 async refresh(cache) {
                     this.loading = true;
 
-                    await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSID=${store.account_sid}&PageSize=${this.page_size}`, cache: cache });
+                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSID=${store.account_sid}&PageSize=${this.page_size}`, cache: cache});
 
                     this.loading = false;
                 },
@@ -1179,7 +1281,7 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSid=${store.account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
+                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSid=${store.account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
 
                     this.searching = false;
                 },
@@ -1192,7 +1294,7 @@
                     this.loading_more = true;
 
                     setTimeout(async () => {
-                        await this.fetchData({ baseUrl: this.next_page_url, path: "", appendResults: true });
+                        await this.fetchData({baseUrl: this.next_page_url, path: "", appendResults: true});
 
                         this.loading_more = false;
                     }, 500);
@@ -1204,7 +1306,7 @@
 
                 alertTextTokens(val) {
                     if (!val) {
-                        return [{ value: "None" }];
+                        return [{value: "None"}];
                     }
 
                     const tokens = val.split("&");
@@ -1225,7 +1327,7 @@
                         });
                     }
 
-                    return [{ label: val }];
+                    return [{label: val}];
                 }
             },
         };
@@ -1249,6 +1351,8 @@
                     records: [],
                     page_size: 20,
                     next_page_url: "",
+                    active_account_sid: store.account_sid,
+                    accounts: store.getAccounts(),
                 };
             },
 
@@ -1257,8 +1361,8 @@
             },
 
             methods: {
-                async fetchData({ baseUrl, path, cache, appendResults }) {
-                    const [error, result] = await callTwilioAPI({ baseUrl, path, cache });
+                async fetchData({baseUrl, path, cache, appendResults}) {
+                    const [error, result] = await callTwilioAPI({baseUrl, path, cache});
 
                     if (error) {
                         this.error = error;
@@ -1276,7 +1380,7 @@
                 async refresh(cache) {
                     this.loading = true;
 
-                    await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${store.account_sid}&PageSize=${this.page_size}`, cache: cache });
+                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${store.account_sid}&PageSize=${this.page_size}`, cache: cache});
 
                     this.loading = false;
                 },
@@ -1306,7 +1410,7 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    await this.fetchData({ baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${store.account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload" });
+                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${store.account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
 
                     this.searching = false;
                 },
@@ -1319,7 +1423,7 @@
                     this.loading_more = true;
 
                     setTimeout(async () => {
-                        await this.fetchData({ baseUrl: this.next_page_url, path: "", appendResults: true });
+                        await this.fetchData({baseUrl: this.next_page_url, path: "", appendResults: true});
 
                         this.loading_more = false;
                     }, 500);
@@ -1341,7 +1445,7 @@
 
                 eventDataItems(val) {
                     if (!val) {
-                        return [{ value: "None" }];
+                        return [{value: "None"}];
                     }
 
                     const flatObj = flattenObject(val);
@@ -1353,17 +1457,17 @@
 
         // routing
         const routes = [
-            { path: "/", name: "Auth", component: Auth, meta: { icon: "key" } },
-            { path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: { icon: "phone" } },
-            { path: "/message-history", name: "Message history", component: MessageHistory, meta: { icon: "speaker_notes" } },
-            { path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: { icon: "settings_voice" } },
-            { path: "/alerts", name: "Alerts", component: Alerts, meta: { icon: "error" } },
-            { path: "/events", name: "Events", component: Events, meta: { icon: "change_history" } }
+            {path: "/", name: "Auth", component: Auth, meta: {icon: "mdi-key-variant"}},
+            {path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: {icon: "mdi-phone"}},
+            {path: "/message-history", name: "Message history", component: MessageHistory, meta: {icon: "mdi-message-bulleted"}},
+            {path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: {icon: "mdi-microphone-settings"}},
+            {path: "/alerts", name: "Alerts", component: Alerts, meta: {icon: "mdi-alert-circle"}},
+            {path: "/events", name: "Events", component: Events, meta: {icon: "mdi-delta"}}
         ];
 
         const router = createRouter({
             history: createWebHistory(),
-            routes: routes.map(x => ({ path: x.path, name: x.name, component: x.component || { template: `#${x.templateID}` } })),
+            routes: routes.map(x => ({path: x.path, name: x.name, component: x.component || {template: `#${x.templateID}`}})),
         })
 
         const DEFAULT_TITLE = "Twilio Viewer";
@@ -1413,7 +1517,7 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-3EZVFZYBLT"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
+        function gtag() {dataLayer.push(arguments);}
         gtag('js', new Date());
 
         gtag('config', 'G-3EZVFZYBLT');
