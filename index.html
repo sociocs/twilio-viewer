@@ -104,15 +104,11 @@
                                         </table>
                                     </v-card-text>
                                 </v-card>
-                                <v-card title="Save connection" class="mt-4">
+                                <v-card title="Save connection (optional)" class="mt-4">
                                     <v-card-text>
                                         <v-alert
                                             text="Note: Twilio account SID and auth token are saved in plain text in your browser's database."
                                             type="warning" :icon="false" class="mb-3"></v-alert>
-
-                                        <v-alert
-                                            text="Information for Twilio subaccounts is available only if you save the primary account."
-                                            type="success" :icon="false" class="mb-3"></v-alert>
 
                                         <v-form @submit.prevent="saveConnection">
                                             <v-text-field v-model="form.connection_name" label="Connection name"
@@ -833,6 +829,8 @@
                                 label: "subaccount_count",
                                 value: result1.accounts?.length,
                             });
+
+                            store.subaccounts = [];
                             for (let i = 0; i < result1.accounts?.length; i++) {
                                 const account = result1.accounts[i];
 
