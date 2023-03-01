@@ -51,6 +51,14 @@
                         <v-list-item-title v-text="route.name"></v-list-item-title>
                     </v-list-item>
                 </v-list>
+                <template v-slot:append>
+                    <v-divider></v-divider>
+                    <div class="text-center pa-2">
+                        <a href="https://github.com/sociocs/twilio-viewer" target="_blank" class="text-white">
+                            <v-icon icon="mdi-github"></v-icon>
+                        </a>
+                    </div>
+                </template>
             </v-navigation-drawer>
 
             <router-view></router-view>
