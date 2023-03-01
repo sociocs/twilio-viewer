@@ -42,13 +42,12 @@
                 </v-list>
                 <v-divider></v-divider>
                 <v-list :lines="false">
-                    <v-list-item v-for="(route, i) in routes" :key="i" :value="route" active-color="primary"
-                        :to="route.path">
+                    <v-list-item v-for="(navItem, i) in navItems" :key="i" active-color="primary" :to="navItem.path">
                         <template v-slot:prepend>
-                            <v-icon :icon="route.meta.icon"></v-icon>
+                            <v-icon :icon="navItem.meta.icon"></v-icon>
                         </template>
 
-                        <v-list-item-title v-text="route.name"></v-list-item-title>
+                        <v-list-item-title v-text="navItem.name"></v-list-item-title>
                     </v-list-item>
                 </v-list>
                 <template v-slot:append>
@@ -135,7 +134,7 @@
                                         <tr>
                                             <th>Account SID</th>
                                             <th>Name</th>
-                                            <th></th>
+                                            <th class="text-center">Currently using?</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -157,7 +156,11 @@
                                                 <v-btn size="x-small" icon="mdi-delete" color="red"
                                                     title="Remove account."
                                                     @click="removeConnection(connection.account_sid)"
-                                                    :loading="removing" :disabled="removing">
+                                                    :loading="removing" :disabled="removing" class="me-5">
+                                                </v-btn>
+                                                <v-btn size="x-small" icon="mdi-chevron-right" color="secondary"
+                                                    title="View subaccounts."
+                                                    :to="'/subaccounts/'+ connection.account_sid">
                                                 </v-btn>
                                             </td>
                                         </tr>
@@ -168,6 +171,50 @@
                     </v-window>
                 </v-sheet>
             </v-container>
+        </v-main>
+    </template>
+
+    <template id="subaccounts">
+        <v-app-bar :title="title">
+            <template v-slot:prepend>
+                <v-btn icon class="hidden-xs-only" @click="$router.back">
+                    <v-icon>mdi-arrow-left</v-icon>
+                </v-btn>
+            </template>
+            <template v-slot:append>
+                <v-btn icon="mdi-cached" :loading="loading" :disabled="loading" @click="refresh"
+                    title="Refresh subaccounts from Twilio.">
+                </v-btn>
+            </template>
+        </v-app-bar>
+
+        <v-main>
+            <v-sheet v-if="loading" class="text-center pa-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+            <v-sheet v-else-if="!records?.length" class="text-center pa-4">
+                <v-alert text="There are no records available."></v-alert>
+            </v-sheet>
+            <v-sheet v-else>
+                <table is="vue:v-table">
+                    <thead>
+                        <tr>
+                            <th>SID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Created at</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="r in records" :key="r.sid">
+                            <td> {{r.sid}}</td>
+                            <td>{{r.name}}</td>
+                            <td>{{r.status}}</td>
+                            <td>{{localDate(r.created_at)}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </v-sheet>
         </v-main>
     </template>
 
@@ -662,6 +709,37 @@
             getAccounts() {
                 return [{sid: this.account_sid, name: this.connection_name}].concat(this.subaccounts);
             },
+            async reloadSubaccounts({persist}) {
+                const [error, result] = await callTwilioAPI({path: `/2010-04-01/Accounts.json`, cache: "reload"});
+                if (error) {
+                    return [error, null];
+                } else {
+                    this.subaccounts = [];
+                    for (let i = 0; i < result.accounts?.length; i++) {
+                        const account = result.accounts[i];
+
+                        if (account.sid !== account.owner_account_sid) {
+                            this.subaccounts.push({
+                                sid: account.sid,
+                                owner_account_sid: account.owner_account_sid,
+                                name: account.friendly_name,
+                                status: account.status,
+                                created_at: (new Date(account.date_created)).getTime(),
+                                loaded_at: Date.now(),
+                            });
+                        }
+                    }
+
+                    if (persist) {
+                        await this.pushSubaccountsToDB();
+                    }
+
+                    return [null, this.subaccounts.length];
+                }
+            },
+            async pushSubaccountsToDB() {
+                await db.subaccounts.bulkPut(this.subaccounts);
+            }
         };
 
         // converts an object to array of label value pair
@@ -721,8 +799,8 @@
             }
         }
 
-        function localDate(dtStr) {
-            return (new Date(dtStr)).toLocaleString();
+        function localDate(value) {
+            return (new Date(value)).toLocaleString();
         }
 
         // auth component
@@ -731,7 +809,6 @@
 
             data() {
                 return {
-                    appBarActions: [{icon: "key"}],
                     tab: "new",
                     loading: true,
                     processing: false,
@@ -820,30 +897,15 @@
                         store.auth_token = this.form.auth_token;
                         store.connection_name = this.form.connection_name;
 
-                        // fetch subaccounts
-                        const [error1, result1] = await callTwilioAPI({path: `/2010-04-01/Accounts.json`, authCredentials: this.form, cache: "reload"});
+                        // fetch and keep subaccounts in store
+                        const [error1, result1] = await store.reloadSubaccounts({persist: false});
                         if (error1) {
                             this.connect_result.error = error1;
                         } else {
                             this.connect_result.account_info.push({
                                 label: "subaccount_count",
-                                value: result1.accounts?.length,
+                                value: result1,
                             });
-
-                            store.subaccounts = [];
-                            for (let i = 0; i < result1.accounts?.length; i++) {
-                                const account = result1.accounts[i];
-
-                                if (account.sid !== account.owner_account_sid) {
-                                    store.subaccounts.push({
-                                        sid: account.sid,
-                                        owner_account_sid: account.owner_account_sid,
-                                        name: account.friendly_name,
-                                        status: account.status,
-                                        created_at: Date.now(),
-                                    });
-                                }
-                            }
                         }
                     }
 
@@ -864,7 +926,7 @@
 
                     // save subaccounts
                     if (store.subaccounts) {
-                        await db.subaccounts.bulkPut(store.subaccounts);
+                        await store.pushSubaccountsToDB();
                     }
 
                     // refresh connections locally
@@ -909,6 +971,53 @@
                     await this.refreshSavedConnections();
 
                     this.removing = false;
+                }
+            },
+        };
+
+        // subaccounts component
+        const Subaccounts = {
+            template: "#subaccounts",
+
+            data() {
+                return {
+                    title: `Subaccounts`,
+                    loading: true,
+                    records: [],
+                };
+            },
+
+            async created() {
+                this.loading = true;
+                const owner_account_sid = this.$route.params.owner_account_sid;
+
+                // get account
+                const account = await db.connections.get(owner_account_sid);
+                this.title += ` for ${account.name}`;
+
+                // get subaccounts
+                const subaccounts = await db.subaccounts.where({owner_account_sid}).sortBy("name");
+                for (let i = 0; i < subaccounts?.length; i++) {
+                    const subaccount = subaccounts[i];
+
+                    this.records.push(subaccount);
+                }
+
+                this.loading = false;
+            },
+
+            methods: {
+                async refresh() {
+                    this.loading = true;
+
+                    // fetch and persist subaccounts to db
+                    await store.reloadSubaccounts({persist: true});
+
+                    this.loading = false;
+                },
+
+                localDate(milliseconds) {
+                    return localDate(milliseconds);
                 }
             },
         };
@@ -1463,13 +1572,16 @@
 
         // routing
         const routes = [
-            {path: "/", name: "Auth", component: Auth, meta: {icon: "mdi-key-variant"}},
-            {path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: {icon: "mdi-phone"}},
-            {path: "/message-history", name: "Message history", component: MessageHistory, meta: {icon: "mdi-message-bulleted"}},
-            {path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: {icon: "mdi-microphone-settings"}},
-            {path: "/alerts", name: "Alerts", component: Alerts, meta: {icon: "mdi-alert-circle"}},
-            {path: "/events", name: "Events", component: Events, meta: {icon: "mdi-delta"}}
+            {path: "/", name: "Auth", component: Auth, meta: {icon: "mdi-key-variant", showInNav: true}},
+            {path: "/subaccounts/:owner_account_sid", name: "Subaccounts", component: Subaccounts, meta: {showInNav: false}},
+            {path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: {icon: "mdi-phone", showInNav: true}},
+            {path: "/message-history", name: "Message history", component: MessageHistory, meta: {icon: "mdi-message-bulleted", showInNav: true}},
+            {path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: {icon: "mdi-microphone-settings", showInNav: true}},
+            {path: "/alerts", name: "Alerts", component: Alerts, meta: {icon: "mdi-alert-circle", showInNav: true}},
+            {path: "/events", name: "Events", component: Events, meta: {icon: "mdi-delta", showInNav: true}}
         ];
+
+        const navItems = routes.filter(x => x.meta.showInNav);
 
         const router = createRouter({
             history: createWebHistory(),
@@ -1496,7 +1608,7 @@
         const app = createApp({
             data() {
                 return {
-                    routes,
+                    navItems,
                 }
             },
 
