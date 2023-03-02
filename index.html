@@ -321,12 +321,12 @@
                             </v-col>
 
                             <v-col>
-                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto"
+                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto" type="date"
                                     density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
                             </v-col>
 
                             <v-col>
-                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto"
+                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto" type="date"
                                     density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
                             </v-col>
 
@@ -419,12 +419,12 @@
                             </v-col>
 
                             <v-col>
-                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto"
+                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto" type="date"
                                     density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
                             </v-col>
 
                             <v-col>
-                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto"
+                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto" type="date"
                                     density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
                             </v-col>
 
@@ -511,12 +511,12 @@
                             </v-col>
 
                             <v-col>
-                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto"
+                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto" type="date"
                                     density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
                             </v-col>
 
                             <v-col>
-                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto"
+                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto" type="date"
                                     density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
                             </v-col>
 
@@ -609,12 +609,12 @@
                             </v-col>
 
                             <v-col cols="12" md="2">
-                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto"
+                                <v-text-field v-model="form.from_date" label="From date" hide-details="auto" type="date"
                                     density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
                             </v-col>
 
                             <v-col cols="12" md="2">
-                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto"
+                                <v-text-field v-model="form.to_date" label="To date" hide-details="auto" type="date"
                                     density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
                             </v-col>
 
@@ -669,6 +669,84 @@
                     <v-progress-linear indeterminate height="6"></v-progress-linear>
                 </v-layout>
             </v-sheet>
+        </v-main>
+    </template>
+
+    <template id="billing">
+        <v-app-bar :title="$route.name">
+            <template v-slot:append>
+                <v-sheet color="green-lighten-3" rounded class="pa-1 ps-3 mr-4 d-flex align-center">
+                    <span class="mr-2 font-weight-bold">Balance</span>
+                    <span class="mr-2" v-if="!refreshingBalance">{{balanceStr()}}</span>
+                    <v-btn size="small" variant="text" icon="mdi-cached" :loading="refreshingBalance"
+                        :disabled="refreshingBalance" @click="balanceRefresh('reload')" title="Refresh balance.">
+                </v-sheet>
+                <v-select class="mr-2" label="Account" hide-details="auto" density="compact"
+                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo"
+                    :disabled="true">
+                </v-select>
+                </v-btn>
+            </template>
+        </v-app-bar>
+
+        <v-main>
+            <v-container>
+                <v-form @submit.prevent="refresh('reload')">
+                    <v-row align="center">
+                        <v-col cols="12" md="4">
+                            <v-text-field v-model="form.from_date" label="From date" hide-details="auto" type="date"
+                                density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
+                        </v-col>
+
+                        <v-col cols="12" md="4">
+                            <v-text-field v-model="form.to_date" label="To date" hide-details="auto" type="date"
+                                density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
+                        </v-col>
+
+                        <v-col cols="12" md="2">
+                            <v-checkbox v-model="form.include_subaccounts" label="Include subaccounts"
+                                hide-details="auto"></v-checkbox>
+                        </v-col>
+
+                        <v-col cols="12" md="2">
+                            <v-btn type="submit" variant="outlined" color="primary" :loading="loading"
+                                :disabled="loading">Submit</v-btn>
+                        </v-col>
+                    </v-row>
+                </v-form>
+            </v-container>
+
+            <v-sheet v-if="loading" class="text-center pa-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+            <v-sheet v-else-if="error" class="pa-4">
+                <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
+            </v-sheet>
+            <v-sheet v-else-if="!records?.length" class="text-center pa-4">
+                <v-alert text="There are no records available."></v-alert>
+            </v-sheet>
+
+            <table v-else is="vue:v-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th class="text-center">Count</th>
+                        <th class="text-center">Usage</th>
+                        <th class="text-right">Price</th>
+                        <th class="text-center">As of</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr v-for="r in records" :key="r.category">
+                        <td>{{r.description}}</td>
+                        <td class="text-center">{{count(r)}}</td>
+                        <td class="text-center">{{usage(r)}}</td>
+                        <td class="text-right">{{price(r)}}</td>
+                        <td class="text-center" title=" r.as_of">{{localDate(r.as_of)}}</td>
+                    </tr>
+                </tbody>
+            </table>
         </v-main>
     </template>
 
@@ -801,6 +879,19 @@
 
         function localDate(value) {
             return (new Date(value)).toLocaleString();
+        }
+
+        const priceFormatter = new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 4,
+            maximumFractionDigits: 4,
+        });
+
+        function formatPrice(value) {
+            if (isNaN(value)) {
+                value = parseFloat(value);
+            }
+
+            return priceFormatter.format(value);
         }
 
         // auth component
@@ -1186,7 +1277,9 @@
                 },
 
                 price(record) {
-                    return `${record.price_unit} ${record.price || "-"}`;
+                    const formattedPrice = record.price ? formatPrice(record.price) : "-";
+
+                    return `${record.price_unit.toUpperCase()} ${formattedPrice}`;
                 },
 
                 localDate(dtStr) {
@@ -1306,7 +1399,9 @@
                 },
 
                 price(record) {
-                    return `${record.price_unit} ${record.price || "-"}`;
+                    const formattedPrice = record.price ? formatPrice(record.price) : "-";
+
+                    return `${record.price_unit.toUpperCase()} ${formattedPrice}`;
                 },
 
                 localDate(dtStr) {
@@ -1570,6 +1665,122 @@
             },
         };
 
+        // billing component
+        const Billing = {
+            template: "#billing",
+
+            data() {
+                return {
+                    loading: true,
+                    refreshingBalance: true,
+                    form: {
+                        from_date: "",
+                        to_date: "",
+                        include_subaccounts: false,
+                    },
+                    error: "",
+                    balance: {},
+                    records: [],
+                    page_size: 1000,
+                    active_account_sid: store.account_sid,
+                    accounts: store.getAccounts(),
+                };
+            },
+
+            created() {
+                this.form = this.defaultDates();
+
+                // read include_subaccounts preference
+                this.form.include_subaccounts = (localStorage.getItem("billing_search_include_subaccounts") === "true") ? true : false;
+
+                this.balanceRefresh();
+                this.refresh();
+            },
+
+            watch: {
+                'form.include_subaccounts'(newValue) {
+                    localStorage.setItem("billing_search_include_subaccounts", newValue);
+                }
+            },
+            methods: {
+                defaultDates() {
+                    const toDate = new Date();
+                    const fromDate = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+
+                    return {
+                        from_date: fromDate.toLocaleDateString("fr-ca"),
+                        to_date: toDate.toLocaleDateString("fr-ca")
+                    };
+                },
+
+                async balanceRefresh(cache) {
+                    this.refreshingBalance = true;
+
+                    // get balance
+                    const [error, result] = await callTwilioAPI({path: `/2010-04-01/Accounts/${this.active_account_sid}/Balance.json`, cache: cache});
+
+                    if (error) {
+                        this.error = error;
+                    } else {
+                        this.balance = result;
+                    }
+
+                    this.refreshingBalance = false;
+                },
+
+                async refresh(cache) {
+                    this.loading = true;
+
+                    // get usage
+                    const params = [];
+                    if (this.form.from_date) {
+                        params.push(`StartDate=${this.form.from_date}`);
+                    }
+                    if (this.form.to_date) {
+                        params.push(`EndDate=${this.form.to_date}`);
+                    }
+                    if (this.form.include_subaccounts) {
+                        params.push(`IncludeSubaccounts=true`);
+                    }
+                    const paramStr = params.join("&");
+
+                    const [error, result] = await callTwilioAPI({path: `/2010-04-01/Accounts/${this.active_account_sid}/Usage/Records.json.json?PageSize=${this.page_size}&${paramStr}`, cache: cache});
+
+                    if (error) {
+                        this.error = error;
+                    } else {
+                        this.records = result.
+                            usage_records.filter(x => parseInt(x.usage) > 0 || parseInt(x.count) > 0).
+                            sort((a, b) => a.category.localeCompare(b.category));
+                    }
+
+                    this.loading = false;
+                },
+
+                balanceStr() {
+                    return `${this.balance?.currency} ${this.balance?.balance || "-"}`;
+                },
+
+                count(record) {
+                    return (record.count) ? parseInt(record.count) : 0;
+                },
+
+                usage(record) {
+                    return (record.usage) ? parseInt(record.usage) : 0;
+                },
+
+                price(record) {
+                    const formattedPrice = record.price ? formatPrice(record.price) : "-";
+
+                    return `${record.price_unit.toUpperCase()} ${formattedPrice}`;
+                },
+
+                localDate(dtStr) {
+                    return localDate(dtStr);
+                }
+            },
+        };
+
         // routing
         const routes = [
             {path: "/", name: "Auth", component: Auth, meta: {icon: "mdi-key-variant", showInNav: true}},
@@ -1578,7 +1789,8 @@
             {path: "/message-history", name: "Message history", component: MessageHistory, meta: {icon: "mdi-message-bulleted", showInNav: true}},
             {path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: {icon: "mdi-microphone-settings", showInNav: true}},
             {path: "/alerts", name: "Alerts", component: Alerts, meta: {icon: "mdi-alert-circle", showInNav: true}},
-            {path: "/events", name: "Events", component: Events, meta: {icon: "mdi-delta", showInNav: true}}
+            {path: "/events", name: "Events", component: Events, meta: {icon: "mdi-delta", showInNav: true}},
+            {path: "/billing", name: "Billing", component: Billing, meta: {icon: "mdi-receipt-text", showInNav: true}}
         ];
 
         const navItems = routes.filter(x => x.meta.showInNav);
