@@ -693,24 +693,49 @@
             <v-container>
                 <v-form @submit.prevent="refresh('reload')">
                     <v-row align="center">
-                        <v-col cols="12" md="4">
+                        <v-col cols="12" md="3">
+                            <v-sheet class="mb-1">
+                                <v-chip :ripple="false" link size="small" class="me-1" @click="setDates('tm')">
+                                    This month
+                                </v-chip>
+                                <v-chip :ripple="false" link size="small" class="me-1" @click="setDates('tq')">
+                                    This quarter
+                                </v-chip>
+                                <v-chip :ripple="false" link size="small" @click="setDates('ty')">
+                                    This year
+                                </v-chip>
+                            </v-sheet>
+                            <v-sheet>
+                                <v-chip :ripple="false" link size="small" class="me-1" @click="setDates('lm')">
+                                    Last month
+                                </v-chip>
+                                <v-chip :ripple="false" link size="small" class="me-1" @click="setDates('lq')">
+                                    Last quarter
+                                </v-chip>
+                                <v-chip :ripple="false" link size="small" @click="setDates('ly')">
+                                    Last year
+                                </v-chip>
+                            </v-sheet>
+                        </v-col>
+
+                        <v-col cols="12" md="2">
                             <v-text-field v-model="form.from_date" label="From date" hide-details="auto" type="date"
                                 density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
                         </v-col>
 
-                        <v-col cols="12" md="4">
+                        <v-col cols="12" md="2">
                             <v-text-field v-model="form.to_date" label="To date" hide-details="auto" type="date"
                                 density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
                         </v-col>
 
-                        <v-col cols="12" md="2">
+                        <v-col cols="12" md="3">
                             <v-checkbox v-model="form.include_subaccounts" label="Include subaccounts"
                                 hide-details="auto"></v-checkbox>
                         </v-col>
 
                         <v-col cols="12" md="2">
                             <v-btn type="submit" variant="outlined" color="primary" :loading="loading"
-                                :disabled="loading">Submit</v-btn>
+                                :disabled="loading">Go</v-btn>
                         </v-col>
                     </v-row>
                 </v-form>
@@ -1760,6 +1785,50 @@
                         from_date: fromDate.toLocaleDateString("fr-ca"),
                         to_date: toDate.toLocaleDateString("fr-ca")
                     };
+                },
+
+                setDates(option) {
+                    const today = new Date();
+                    let quarter = Math.floor((today.getMonth() / 3));
+                    let toDate, fromDate;
+
+                    switch (option) {
+                        case "tm":
+                            toDate = today;
+                            fromDate = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+                            break;
+
+                        case "lm":
+                            fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                            toDate = new Date(fromDate.getFullYear(), fromDate.getMonth() + 1, 0);
+                            break;
+
+                        case "tq":
+                            fromDate = new Date(today.getFullYear(), quarter * 3, 1);
+                            toDate = today;
+                            break;
+
+                        case "lq":
+                            fromDate = new Date(today.getFullYear(), quarter * 3 - 3, 1);
+                            toDate = new Date(fromDate.getFullYear(), fromDate.getMonth() + 3, 0);
+                            break;
+
+                        case "ty":
+                            fromDate = new Date(today.getFullYear(), 1, 1);
+                            toDate = today;
+                            break;
+
+                        case "ly":
+                            fromDate = new Date(today.getFullYear() - 1, 1, 1);
+                            toDate = new Date(fromDate.getFullYear(), 12, 31);
+                            break;
+
+                        default:
+                            return;
+                    }
+
+                    this.form.from_date = fromDate.toLocaleDateString("fr-ca");
+                    this.form.to_date = toDate.toLocaleDateString("fr-ca");
                 },
 
                 async balanceRefresh(cache) {
