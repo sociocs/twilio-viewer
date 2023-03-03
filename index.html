@@ -1724,9 +1724,15 @@
             },
 
             created() {
-                this.form = this.defaultDates();
+                const defaultDts = this.defaultDates();
 
-                // read include_subaccounts preference
+                // read preference and assing default values if needed
+                const lsFromDate = localStorage.getItem("billing_search_from_date");
+                this.form.from_date = lsFromDate ? lsFromDate : defaultDts.from_date;
+
+                const lsToDate = localStorage.getItem("billing_search_to_date");
+                this.form.to_date = lsToDate ? lsToDate : defaultDts.to_date;
+
                 this.form.include_subaccounts = (localStorage.getItem("billing_search_include_subaccounts") === "true") ? true : false;
 
                 this.balanceRefresh();
@@ -1734,6 +1740,12 @@
             },
 
             watch: {
+                'form.from_date'(newValue) {
+                    localStorage.setItem("billing_search_from_date", newValue);
+                },
+                'form.to_date'(newValue) {
+                    localStorage.setItem("billing_search_to_date", newValue);
+                },
                 'form.include_subaccounts'(newValue) {
                     localStorage.setItem("billing_search_include_subaccounts", newValue);
                 }
