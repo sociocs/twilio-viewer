@@ -722,30 +722,63 @@
             <v-sheet v-else-if="error" class="pa-4">
                 <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
             </v-sheet>
-            <v-sheet v-else-if="!records?.length" class="text-center pa-4">
+            <v-sheet v-else-if="!records.length" class="text-center pa-4">
                 <v-alert text="There are no records available."></v-alert>
             </v-sheet>
 
             <table v-else is="vue:v-table">
                 <thead>
                     <tr>
-                        <th>Category</th>
-                        <th class="text-center">Count</th>
-                        <th class="text-center">Usage</th>
-                        <th class="text-right">Price</th>
+                        <th colspan="3">Category</th>
+                        <th class="text-left">Count</th>
+                        <th class="text-left">Chargeable Qty</th>
+                        <th class="text-right">Cost</th>
                         <th class="text-center">As of</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <tr v-for="r in records" :key="r.category">
-                        <td>{{r.description}}</td>
-                        <td class="text-center">{{count(r)}}</td>
-                        <td class="text-center">{{usage(r)}}</td>
-                        <td class="text-right">{{price(r)}}</td>
-                        <td class="text-center" title=" r.as_of">{{localDate(r.as_of)}}</td>
-                    </tr>
+                    <template v-for="item in records">
+                        <tr class="font-weight-bold">
+                            <td colspan="7">{{item.group}}</td>
+                        </tr>
+
+                        <tr v-for="r in item.children">
+                            <template v-if="r.level===1">
+                                <td colspan="3" :title="r.category_desc">
+                                    {{r.description}}
+                                </td>
+                            </template>
+                            <template v-else-if="r.level===2">
+                                <td></td>
+                                <td colspan="2" :title="r.category_desc">
+                                    {{r.description}}
+                                </td>
+                            </template>
+                            <template v-else>
+                                <td></td>
+                                <td></td>
+                                <td :title="r.category_desc">{{r.description}}</td>
+                            </template>
+                            <td class="text-left">{{count(r)}}</td>
+                            <td class="text-left">{{usage(r)}}</td>
+                            <td class="text-right">{{price(r)}}</td>
+                            <td class="text-center" title=" r.as_of">{{localDate(r.as_of)}}</td>
+                        </tr>
+                    </template>
                 </tbody>
+
+                <tfoot class="font-weight-bold">
+                    <tr>
+                        <td>Total</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="text-right">{{price(totals_record)}}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
             </table>
         </v-main>
     </template>
@@ -755,7 +788,8 @@
             "vue":        "https://cdn.jsdelivr.net/npm/vue@3.2.47/dist/vue.esm-browser.js",
             "@vue/devtools-api": "https://cdn.jsdelivr.net/npm/@vue/devtools-api@6.5.0/lib/esm/index.min.js",
             "vue-router": "https://cdn.jsdelivr.net/npm/vue-router@4.1.6/dist/vue-router.esm-browser.js",
-            "vuetify": "https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.esm.js"
+            "vuetify": "https://cdn.jsdelivr.net/npm/vuetify@3.1.6/dist/vuetify.esm.js",
+            "billing-category-map": "/billing-category-map.js"
         } }
     </script>
 
@@ -765,6 +799,7 @@
         import {createApp, nextTick} from "vue";
         import {createRouter, createWebHistory} from "vue-router";
         import {createVuetify} from "vuetify";
+        import {billingCategoryMap} from "billing-category-map";
 
         const db = new Dexie("twilio-viewer-db");
 
@@ -1681,6 +1716,7 @@
                     error: "",
                     balance: {},
                     records: [],
+                    totals_record: {},
                     page_size: 1000,
                     active_account_sid: store.account_sid,
                     accounts: store.getAccounts(),
@@ -1702,6 +1738,7 @@
                     localStorage.setItem("billing_search_include_subaccounts", newValue);
                 }
             },
+
             methods: {
                 defaultDates() {
                     const toDate = new Date();
@@ -1730,6 +1767,7 @@
 
                 async refresh(cache) {
                     this.loading = true;
+                    this.records = [];
 
                     // get usage
                     const params = [];
@@ -1739,9 +1777,9 @@
                     if (this.form.to_date) {
                         params.push(`EndDate=${this.form.to_date}`);
                     }
-                    if (this.form.include_subaccounts) {
-                        params.push(`IncludeSubaccounts=true`);
-                    }
+                    const includeSubaccounts = (this.form.include_subaccounts) ? "true" : "false";
+                    params.push(`IncludeSubaccounts=${includeSubaccounts}`);
+
                     const paramStr = params.join("&");
 
                     const [error, result] = await callTwilioAPI({path: `/2010-04-01/Accounts/${this.active_account_sid}/Usage/Records.json.json?PageSize=${this.page_size}&${paramStr}`, cache: cache});
@@ -1749,9 +1787,47 @@
                     if (error) {
                         this.error = error;
                     } else {
-                        this.records = result.
-                            usage_records.filter(x => parseInt(x.usage) > 0 || parseInt(x.count) > 0).
-                            sort((a, b) => a.category.localeCompare(b.category));
+                        // filter and map results
+                        let usage = [];
+
+                        result.
+                            usage_records.
+                            filter(x => parseInt(x.usage) > 0 || parseInt(x.count) > 0).
+                            map(x => {
+                                const categoryMap = billingCategoryMap.get(x.category) || billingCategoryMap.get("other");
+
+                                return {...x, ...categoryMap};
+                            }).
+                            filter(x => !x.ignore).
+                            sort((a, b) => a.level - b.level).
+                            forEach(x => {
+                                if (x.category === "totalprice") {
+                                    // total price record is stored separately
+                                    this.totals_record = x;
+                                }
+                                else {
+                                    // all other records
+                                    let groupChildren = usage.find(y => y.group === x.group)?.children;
+                                    if (!groupChildren) {
+                                        groupChildren = [];
+                                        usage.push({group: x.group, children: groupChildren});
+                                    }
+
+                                    // find first item with higher order than this entry
+                                    const nextItemIndex = groupChildren.findIndex(y => y.order > x.order);
+
+                                    if (nextItemIndex >= 0) {
+                                        groupChildren.splice(nextItemIndex, 0, x);
+                                    } else {
+                                        groupChildren.push(x);
+                                    }
+                                }
+                            });
+
+                        // sort final records by group, and add to state
+                        usage.
+                            sort((a, b) => a.group.localeCompare(b.group)).
+                            forEach(x => this.records.push(x));
                     }
 
                     this.loading = false;
@@ -1762,11 +1838,15 @@
                 },
 
                 count(record) {
-                    return (record.count) ? parseInt(record.count) : 0;
+                    const cnt = (record.count) ? parseInt(record.count) : 0;
+
+                    return (record.count_unit) ? `${cnt} (${record.count_unit})` : cnt;
                 },
 
                 usage(record) {
-                    return (record.usage) ? parseInt(record.usage) : 0;
+                    const cnt = (record.usage) ? parseInt(record.usage) : 0;
+
+                    return (record.usage_unit) ? `${cnt} (${record.usage_unit})` : cnt;
                 },
 
                 price(record) {
