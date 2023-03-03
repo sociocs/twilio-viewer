@@ -1814,13 +1814,13 @@
                             break;
 
                         case "ty":
-                            fromDate = new Date(today.getFullYear(), 1, 1);
+                            fromDate = new Date(today.getFullYear(), 0, 1);
                             toDate = today;
                             break;
 
                         case "ly":
-                            fromDate = new Date(today.getFullYear() - 1, 1, 1);
-                            toDate = new Date(fromDate.getFullYear(), 12, 31);
+                            fromDate = new Date(today.getFullYear() - 1, 0, 1);
+                            toDate = new Date(fromDate.getFullYear(), 11, 31);
                             break;
 
                         default:
