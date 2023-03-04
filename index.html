@@ -682,8 +682,7 @@
                         :disabled="refreshingBalance" @click="balanceRefresh('reload')" title="Refresh balance.">
                 </v-sheet>
                 <v-select class="mr-2" label="Account" hide-details="auto" density="compact"
-                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo"
-                    :disabled="true">
+                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo">
                 </v-select>
                 </v-btn>
             </template>
@@ -1773,6 +1772,12 @@
                 },
                 'form.include_subaccounts'(newValue) {
                     localStorage.setItem("billing_search_include_subaccounts", newValue);
+                },
+                active_account_sid(newValue) {
+                    this.active_account_sid = store.active_account_sid = newValue;
+
+                    // refresh data from api
+                    this.refresh();
                 }
             },
 
