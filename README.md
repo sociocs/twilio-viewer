@@ -12,9 +12,13 @@ Twilio console offers a great lot of functionality, however, it's not convenient
 
 1. Connect to Twilio account.
 1. Save multiple Twilio accounts.
-1. List of phone numbers in the account.
+1. See information at the subaccount level (if there are any).
+1. List of phone numbers.
 1. Message history with search facility.
 1. Voice call history with search facility.
+1. Alerts (for example, errors)
+1. Events (logs of changes to the account)
+1. Billing (simple view to charges in all categories)
 
 ## Development stack
 
@@ -25,4 +29,4 @@ Twilio console offers a great lot of functionality, however, it's not convenient
 1. IndexedDB (<https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB>)
 1. Dexie.js for IndexedDB (<https://dexie.org/>)
 1. Google Roboto Fonts (<https://fonts.google.com/specimen/Roboto>)
-1. Google Material Icons (<https://fonts.google.com/icons?icon.set=Material+Icons>)
+1. Material Design Icons (<https://pictogrammers.com/library/mdi/>)
