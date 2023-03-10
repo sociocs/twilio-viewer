@@ -218,6 +218,49 @@
         </v-main>
     </template>
 
+    <template id="account-info">
+        <v-app-bar :title="$route.name">
+            <template v-slot:append>
+                <v-autocomplete class="mr-2" label="Account" hide-details="auto" density="compact"
+                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo">
+                    <template v-slot:item="{ props, item }">
+                        <v-list-item v-bind="props" :title="item?.raw?.name" :subtitle="item?.raw?.sid"></v-list-item>
+                    </template>
+                </v-autocomplete>
+
+                <v-btn icon="mdi-cached" :loading="loading" :disabled="loading" @click="refresh('reload')"
+                    title="Refresh">
+                </v-btn>
+            </template>
+        </v-app-bar>
+
+        <v-main>
+            <v-sheet v-if="loading" class="text-center pa-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+            <v-sheet v-else-if="error" class="pa-4">
+                <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
+            </v-sheet>
+            <v-sheet v-else-if="!records?.length" class="text-center pa-4">
+                <v-alert text="There are no records available."></v-alert>
+            </v-sheet>
+            <v-sheet v-else>
+                <v-card>
+                    <v-card-text>
+                        <table is="vue:v-table">
+                            <tbody>
+                                <tr v-for="item in records">
+                                    <th>{{item.label}}</th>
+                                    <td>{{item.value}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </v-card-text>
+                </v-card>
+            </v-sheet>
+        </v-main>
+    </template>
+
     <template id="phone-numbers">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
@@ -1172,6 +1215,55 @@
             },
         };
 
+        // account info component
+        const AccountInfo = {
+            template: "#account-info",
+
+            data() {
+                return {
+                    loading: true,
+                    error: "",
+                    records: [],
+                    active_account_sid: store.getActiveAccountSid(),
+                    accounts: store.getAccounts(),
+                };
+            },
+
+            async created() {
+                // refresh data from api
+                this.refresh();
+            },
+
+            watch: {
+                active_account_sid(newValue) {
+                    this.active_account_sid = store.active_account_sid = newValue;
+
+                    // refresh data from api
+                    this.refresh();
+                }
+            },
+
+            methods: {
+                async refresh(cache) {
+                    this.loading = true;
+
+                    const [error, result] = await callTwilioAPI({path: `/2010-04-01/Accounts/${this.active_account_sid}.json`, cache: cache});
+
+                    if (error) {
+                        this.error = error;
+                    } else {
+                        this.records = toLabelValArray(result, ["sid", "owner_account_sid", "friendly_name", "type", "status", "date_created", "date_updated"]);;
+                    }
+
+                    this.loading = false;
+                },
+
+                localDate(dtStr) {
+                    return localDate(dtStr);
+                }
+            },
+        };
+
         // phone numbers component
         const PhoneNumbers = {
             template: "#phone-numbers",
@@ -1951,10 +2043,11 @@
         const routes = [
             {path: "/", name: "Auth", component: Auth, meta: {icon: "mdi-key-variant", showInNav: true}},
             {path: "/subaccounts/:owner_account_sid", name: "Subaccounts", component: Subaccounts, meta: {showInNav: false}},
+            {path: "/account-info", name: "Account info", component: AccountInfo, meta: {icon: "mdi-information", showInNav: true}},
             {path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: {icon: "mdi-phone", showInNav: true}},
             {path: "/message-history", name: "Message history", component: MessageHistory, meta: {icon: "mdi-message-bulleted", showInNav: true}},
             {path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: {icon: "mdi-microphone-settings", showInNav: true}},
-            {path: "/alerts", name: "Alerts", component: Alerts, meta: {icon: "mdi-alert-circle", showInNav: true}},
+            {path: "/alerts", name: "Alerts", component: Alerts, meta: {icon: "mdi-alert", showInNav: true}},
             {path: "/events", name: "Events", component: Events, meta: {icon: "mdi-delta", showInNav: true}},
             {path: "/billing", name: "Billing", component: Billing, meta: {icon: "mdi-receipt-text", showInNav: true}}
         ];
