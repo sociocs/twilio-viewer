@@ -1960,7 +1960,7 @@
 
                     const paramStr = params.join("&");
 
-                    const [error, result] = await callTwilioAPI({path: `/2010-04-01/Accounts/${this.active_account_sid}/Usage/Records.json.json?PageSize=${this.page_size}&${paramStr}`, cache: cache});
+                    const [error, result] = await callTwilioAPI({path: `/2010-04-01/Accounts/${this.active_account_sid}/Usage/Records.json?PageSize=${this.page_size}&${paramStr}`, cache: cache});
 
                     if (error) {
                         this.error = error;
