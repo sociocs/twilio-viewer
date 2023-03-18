@@ -327,6 +327,70 @@
         </v-main>
     </template>
 
+    <template id="messaging-services">
+        <v-app-bar :title="$route.name">
+            <template v-slot:append>
+                <v-autocomplete class="mr-2" label="Account" hide-details="auto" density="compact"
+                    v-model="active_account_sid" item-title="name" item-value="sid" :items="accounts" variant="solo">
+                    <template v-slot:item="{ props, item }">
+                        <v-list-item v-bind="props" :title="item?.raw?.name" :subtitle="item?.raw?.sid"></v-list-item>
+                    </template>
+                </v-autocomplete>
+
+                <v-btn icon="mdi-cached" :loading="loading" :disabled="loading" @click="refresh('reload')"
+                    title="Refresh">
+                </v-btn>
+            </template>
+        </v-app-bar>
+
+        <v-main>
+            <v-sheet v-if="loading" class="text-center pa-4">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+            <v-sheet v-else-if="error" class="pa-4">
+                <v-alert type="error" title="Error" :text="error" :icon="false"></v-alert>
+            </v-sheet>
+            <v-sheet v-else-if="!records?.length" class="text-center pa-4">
+                <v-alert text="There are no records available."></v-alert>
+            </v-sheet>
+            <v-sheet v-else>
+                <table is="vue:v-table">
+                    <thead>
+                        <tr>
+                            <th>SID</th>
+                            <th>Friendly name</th>
+                            <th>Settings</th>
+                            <th>Webhook URLs</th>
+                            <th>Date created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="r in records" :key="r.sid">
+                            <td>
+                                <div style="max-width: 100px;" class="text-truncate" :title="r.sid">
+                                    {{r.sid}}
+                                </div>
+                            </td>
+                            <td>{{r.friendly_name}}</td>
+                            <td>
+                                <v-list lines="one" density="compact" variant="text" class="py-0">
+                                    <v-list-item v-for="c in settings(r)" :key="c.label" :title="c.label"
+                                        :subtitle="c.value" class="px-0"></v-list-item>
+                                </v-list>
+                            <td>
+                                <v-list lines="one" density="compact" variant="text" class="py-0">
+                                    <v-list-item v-for="url in urls(r)" :key="url.label" :title="url.label"
+                                        :subtitle="url.value" class="px-0 text-truncate"></v-list-item>
+                                </v-list>
+                            </td>
+                            <td :title="r.date_created">{{localDate(r.date_created)}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </v-sheet>
+        </v-main>
+    </template>
+
     <template id="message-history">
         <v-app-bar :title="$route.name">
             <template v-slot:append>
@@ -1321,6 +1385,63 @@
             },
         };
 
+        // messaging services component
+        const MessagingServices = {
+            template: "#messaging-services",
+
+            data() {
+                return {
+                    loading: true,
+                    error: "",
+                    records: [],
+                    active_account_sid: store.getActiveAccountSid(),
+                    accounts: store.getAccounts(),
+                };
+            },
+
+            async created() {
+                // refresh data from api
+                this.refresh();
+            },
+
+            watch: {
+                active_account_sid(newValue) {
+                    this.active_account_sid = store.active_account_sid = newValue;
+
+                    // refresh data from api
+                    this.refresh();
+                }
+            },
+
+            methods: {
+                async refresh(cache) {
+                    this.loading = true;
+
+                    const [error, result] = await callTwilioAPI({baseUrl: "https://messaging.twilio.com/v1", path: `/Services`, cache: cache});
+
+                    if (error) {
+                        this.error = error;
+                    } else {
+                        this.records = result.services;
+                    }
+
+                    this.loading = false;
+                },
+
+                urls(obj) {
+                    return toLabelValArray(obj, ["inbound_request_url", "inbound_method", "fallback_url", "fallback_method", "status_callback", "use_inbound_webhook_on_number"]);
+                },
+
+                settings(obj) {
+                    return toLabelValArray(obj, ["area_code_geomatch", "fallback_to_long_code", "smart_encoding", "sticky_sender", "mms_converter", "us_app_to_person_registered", "usecase", "validity_period"]);
+                },
+
+                localDate(dtStr) {
+                    return localDate(dtStr);
+                }
+            },
+        };
+
         // message history component
         const MessageHistory = {
             template: "#message-history",
@@ -2045,6 +2166,7 @@
             {path: "/subaccounts/:owner_account_sid", name: "Subaccounts", component: Subaccounts, meta: {showInNav: false}},
             {path: "/account-info", name: "Account info", component: AccountInfo, meta: {icon: "mdi-information", showInNav: true}},
             {path: "/phone-numbers", name: "Phone numbers", component: PhoneNumbers, meta: {icon: "mdi-phone", showInNav: true}},
+            {path: "/messaging-services", name: "Messaging services", component: MessagingServices, meta: {icon: "mdi-message-text-fast", showInNav: true}},
             {path: "/message-history", name: "Message history", component: MessageHistory, meta: {icon: "mdi-message-bulleted", showInNav: true}},
             {path: "/voice-call-history", name: "Voice call history", component: VoiceCallHistory, meta: {icon: "mdi-microphone-settings", showInNav: true}},
             {path: "/alerts", name: "Alerts", component: Alerts, meta: {icon: "mdi-alert", showInNav: true}},
