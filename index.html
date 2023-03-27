@@ -1417,7 +1417,7 @@
                 async refresh(cache) {
                     this.loading = true;
 
-                    const [error, result] = await callTwilioAPI({baseUrl: "https://messaging.twilio.com/v1", path: `/Services`, cache: cache});
+                    const [error, result] = await callTwilioAPI({baseUrl: "https://messaging.twilio.com/v1", path: `/Services?AccountSID=${this.active_account_sid}`, cache: cache});
 
                     if (error) {
                         this.error = error;
@@ -1529,7 +1529,7 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    await this.fetchData({path: `/2010-04-01/Accounts/${store.account_sid}/Messages.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
+                    await this.fetchData({path: `/2010-04-01/Accounts/${this.active_account_sid}/Messages.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
 
                     this.searching = false;
                 },
@@ -1647,7 +1647,7 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    await this.fetchData({path: `/2010-04-01/Accounts/${store.account_sid}/Calls.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
+                    await this.fetchData({path: `/2010-04-01/Accounts/${this.active_account_sid}/Calls.json?PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
 
                     this.searching = false;
                 },
@@ -1736,7 +1736,7 @@
                 async refresh(cache) {
                     this.loading = true;
 
-                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSID=${store.account_sid}&PageSize=${this.page_size}`, cache: cache});
+                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSID=${this.active_account_sid}&PageSize=${this.page_size}`, cache: cache});
 
                     this.loading = false;
                 },
@@ -1763,7 +1763,7 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSid=${store.account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
+                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Alerts?AccountSid=${this.active_account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
 
                     this.searching = false;
                 },
@@ -1862,7 +1862,7 @@
                 async refresh(cache) {
                     this.loading = true;
 
-                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${store.account_sid}&PageSize=${this.page_size}`, cache: cache});
+                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${this.active_account_sid}&PageSize=${this.page_size}`, cache: cache});
 
                     this.loading = false;
                 },
@@ -1892,7 +1892,7 @@
                     }
                     const searchStr = searchList.join("&");
 
-                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${store.account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
+                    await this.fetchData({baseUrl: "https://monitor.twilio.com/v1", path: `/Events?AccountSid=${this.active_account_sid}&PageSize=${this.page_size}&${searchStr}`, cache: "reload"});
 
                     this.searching = false;
                 },
