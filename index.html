@@ -575,8 +575,8 @@
                             <td class="text-center">{{r.direction}}</td>
                             <td>{{r.from}}</td>
                             <td>{{r.to}}</td>
-                            <td title="r.start_time">{{localDate(r.start_time)}}</td>
-                            <td title="localDate">{{localDate(r.end_time)}}</td>
+                            <td :title="r.start_time">{{localDate(r.start_time)}}</td>
+                            <td :title="r.end_time">{{localDate(r.end_time)}}</td>
                             <td class="text-center">{{duration(r.duration)}}</td>
                             <td class="text-center">{{r.status}}</td>
                             <td class="text-center">{{price(r)}}</td>
@@ -661,7 +661,7 @@
                                     {{r.resource_sid}}
                                 </div>
                             </td>
-                            <td title="r.date_generated">{{localDate(r.date_generated)}}</td>
+                            <td :title="r.date_generated">{{localDate(r.date_generated)}}</td>
                             <td>
                                 <v-list lines="one" density="compact" variant="text" class="py-0">
                                     <v-list-item v-for="item in alertTextTokens(r.alert_text)" :key="item.label"
@@ -761,7 +761,7 @@
                                     {{r.resource_sid}}
                                 </div>
                             </td>
-                            <td title="r.event_date">{{localDate(r.event_date)}}</td>
+                            <td :title="r.event_date">{{localDate(r.event_date)}}</td>
                             <td class="text-center">{{r.source}}</td>
                             <td>{{actor(r)}}</td>
                             <td>{{r.description}}</td>
@@ -897,7 +897,7 @@
                             <td class="text-left">{{count(r)}}</td>
                             <td class="text-left">{{usage(r)}}</td>
                             <td class="text-right">{{price(r)}}</td>
-                            <td class="text-center" title=" r.as_of">{{localDate(r.as_of)}}</td>
+                            <td class="text-center" :title="r.as_of">{{localDate(r.as_of)}}</td>
                         </tr>
                     </template>
                 </tbody>
