@@ -53,10 +53,12 @@
                 <template v-slot:append>
                     <v-divider></v-divider>
                     <div class="text-center pa-2">
-                        <a href="https://github.com/sociocs/twilio-viewer" target="_blank" class="text-white text-decoration-none mx-1">
+                        <a href="https://github.com/sociocs/twilio-viewer" target="_blank"
+                            class="text-white text-decoration-none mx-1">
                             <v-icon icon="mdi-github"></v-icon>
                         </a>
-                        <a href="https://github.com/sociocs/twilio-viewer#twilio-viewer" target="_blank" class="text-white text-decoration-none mx-1">
+                        <a href="https://github.com/sociocs/twilio-viewer#twilio-viewer" target="_blank"
+                            class="text-white text-decoration-none mx-1">
                             <v-icon icon="mdi-information-outline"></v-icon>
                         </a>
                     </div>
@@ -477,7 +479,31 @@
                             <td class="text-center">{{r.direction}}</td>
                             <td>{{r.from}}</td>
                             <td>{{r.to}}</td>
-                            <td>{{r.body}}</td>
+                            <td>
+                                <div v-if="r.body">
+                                    {{r.body}}
+                                </div>
+                                <template v-if="hasMedia(r.num_media)">
+                                    <template v-if="r.media_loading">
+                                        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                                    </template>
+                                    <template v-else-if="r.media_list">
+                                        <v-list lines="one">
+                                            <v-list-item :href="media.link" target="_blank"
+                                                v-for="media in r.media_list" :key="media.sid" :title="media.sid"
+                                                :subtitle="media.content_type">
+                                                <template v-slot:prepend>
+                                                    <v-icon color="primary" :icon="icon(media.content_type)"></v-icon>
+                                                </template>
+                                            </v-list-item>
+                                        </v-list>
+                                    </template>
+                                    <template v-else>
+                                        <v-btn variant="text" icon="mdi-attachment" @click="refreshMediaList(r.sid)">
+                                        </v-btn>
+                                    </template>
+                                </template>
+                            </td>
                             <td :title="r.date_updated">{{localDate(r.date_updated)}}</td>
                             <td class="text-center">{{r.num_segments}}</td>
                             <td class="text-center">{{r.status}}</td>
@@ -1559,6 +1585,52 @@
 
                 localDate(dtStr) {
                     return localDate(dtStr);
+                },
+
+                hasMedia(val) {
+                    return parseInt(val || "0") > 0;
+                },
+
+                async refreshMediaList(sid) {
+                    // find the message record
+                    const message = this.records.find(x => x.sid === sid);
+
+                    if (!message) {
+                        return;
+                    }
+
+                    // show spinner
+                    message.media_loading = true;
+
+                    const [error, result] = await callTwilioAPI({path: message.subresource_uris.media});
+
+                    if (result) {
+                        // for each media create a URL entry
+                        message.media_list = result.media_list;
+
+                        message.media_list.forEach(m => {
+                            m.link = `https://api.twilio.com${m.uri.replace(".json", "")}`;
+                        });
+
+                        // hide spinner
+                        message.media_loading = false;
+                    }
+                },
+
+                icon(contentType) {
+                    if (contentType.startsWith("image")) {
+                        return "mdi-file-image";
+                    }
+
+                    if (contentType.startsWith("video")) {
+                        return "mdi-file-video";
+                    }
+
+                    if (contentType.startsWith("audio")) {
+                        return "mdi-file-music";
+                    }
+
+                    return "mdi-file";
                 }
             },
         };
