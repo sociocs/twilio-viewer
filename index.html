@@ -506,7 +506,24 @@
                             </td>
                             <td :title="r.date_updated">{{localDate(r.date_updated)}}</td>
                             <td class="text-center">{{r.num_segments}}</td>
-                            <td class="text-center">{{r.status}}</td>
+                            <td class="text-center">
+                                <div>
+                                    {{r.status}}
+                                </div>
+                                <template v-if="r.error_message">
+                                    <span class="text-error">
+                                        {{r.error_message}}
+                                    </span>
+                                </template>
+                                <template v-if="r.error_code">
+                                    <div>
+                                        <v-chip class="my-1" size="small" color="error"
+                                            :href="errorPageUrl(r.error_code)" target="_blank">
+                                            Error code {{r.error_code}}
+                                        </v-chip>
+                                    </div>
+                                </template>
+                            </td>
                             <td class="text-center">{{price(r)}}</td>
                         </tr>
                     </tbody>
@@ -1631,6 +1648,10 @@
                     }
 
                     return "mdi-file";
+                },
+
+                errorPageUrl(code) {
+                    return `https://www.twilio.com/docs/errors/${code}`;
                 }
             },
         };
