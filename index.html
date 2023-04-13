@@ -54,11 +54,11 @@
                     <v-divider></v-divider>
                     <div class="text-center pa-2">
                         <a href="https://github.com/sociocs/twilio-viewer" target="_blank"
-                            class="text-white text-decoration-none mx-1">
+                            class="text-white text-decoration-none mx-1" title="Code on GitHub.">
                             <v-icon icon="mdi-github"></v-icon>
                         </a>
                         <a href="https://github.com/sociocs/twilio-viewer#twilio-viewer" target="_blank"
-                            class="text-white text-decoration-none mx-1">
+                            class="text-white text-decoration-none mx-1" title="Informtion about the tool.">
                             <v-icon icon="mdi-information-outline"></v-icon>
                         </a>
                     </div>
@@ -87,6 +87,30 @@
                         <v-window-item value="new">
                             <v-sheet class="py-4">
                                 <v-form @submit.prevent="connect">
+                                    <tempalte v-if="!saved_connections?.length">
+                                        <v-alert type="info" title="Important Information" icon="mdi-firework"
+                                            variant="tonal" class="mb-4">
+                                            <template v-slot:text>
+                                                <ul>
+                                                    <li>- This is an open source FREE tool. Code available on <a
+                                                            href="https://github.com/sociocs/twilio-viewer"
+                                                            target="_blank">GitHub</a>.</li>
+                                                    <li>
+                                                        - All your information and data stays locally on your browser.
+                                                    </li>
+                                                    <li>
+                                                        - It uses Twilio APIs directly from the browser to fetch data.
+                                                        No third party servers are involved.
+                                                    </li>
+                                                    <li>
+                                                        - A commercial solution (with a FREE plan) for two-way Twilio
+                                                        text messaging, bulk messaging and more is available <a
+                                                            href="https://www.sociocs.com/" target="_blank">here</a>.
+                                                    </li>
+                                                </ul>
+                                            </template>
+                                        </v-alert>
+                                    </tempalte>
                                     <v-text-field v-model="form.account_sid" label="Account SID"
                                         :rules="[v => !!v || 'Required.']"></v-text-field>
                                     <v-text-field v-model="form.auth_token" label="Auth token"
