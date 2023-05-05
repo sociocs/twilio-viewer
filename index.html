@@ -1621,7 +1621,7 @@
                 price(record) {
                     const formattedPrice = record.price ? formatPrice(record.price) : "-";
 
-                    return `${record.price_unit.toUpperCase()} ${formattedPrice}`;
+                    return `${record.price_unit?.toUpperCase()} ${formattedPrice}`;
                 },
 
                 localDate(dtStr) {
@@ -1793,7 +1793,7 @@
                 price(record) {
                     const formattedPrice = record.price ? formatPrice(record.price) : "-";
 
-                    return `${record.price_unit.toUpperCase()} ${formattedPrice}`;
+                    return `${record.price_unit?.toUpperCase()} ${formattedPrice}`;
                 },
 
                 localDate(dtStr) {
@@ -2271,7 +2271,7 @@
                 price(record) {
                     const formattedPrice = record.price ? formatPrice(record.price) : "-";
 
-                    return `${record.price_unit.toUpperCase()} ${formattedPrice}`;
+                    return `${record.price_unit?.toUpperCase()} ${formattedPrice}`;
                 },
 
                 localDate(dtStr) {
