@@ -335,7 +335,15 @@
                                     {{r.sid}}
                                 </div>
                             </td>
-                            <td>{{r.phone_number}}</td>
+                            <td>
+                                <div>
+                                    {{r.phone_number}}
+                                </div>
+                                <v-list lines="one" density="compact" variant="text" class="py-0">
+                                    <v-list-item v-for="c in friendlyName(r)" :key="c.label" :title="c.label"
+                                        :subtitle="c.value" class="px-0"></v-list-item>
+                                </v-list>
+                            </td>
                             <td>
                                 <v-list lines="one" density="compact" variant="text" class="py-0">
                                     <v-list-item v-for="c in capabilities(r.capabilities)" :key="c.label"
@@ -1447,6 +1455,10 @@
 
                 capabilities(obj) {
                     return toLabelValArray(obj, ["sms", "mms", "voice"]);
+                },
+
+                friendlyName(obj) {
+                    return toLabelValArray({friendly_name: obj.friendly_name}, ["friendly_name"]);
                 },
 
                 localDate(dtStr) {
