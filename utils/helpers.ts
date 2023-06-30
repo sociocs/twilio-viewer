@@ -1,11 +1,11 @@
 // converts an object to array of label value pair
 export const toLabelValArray = (object: Record<string, any>, keys: Array<string>) => {
-    const result = [];
+    const result = [] as Array<Record<string, string>>;
 
     for (let i = 0; i < keys?.length; i++) {
         const key = keys[i];
 
-        result.push({ label: key.toString(), value: object[key].toString() || "None" });
+        result.push({ label: key.toString(), value: object[key]?.toString() || "None" });
     }
 
     return result;

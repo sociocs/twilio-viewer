@@ -35,9 +35,6 @@
 </template>
 
 <script setup lang="ts">
-import { toLabelValArray } from "~/utils/helpers";
-import { useMainStore } from "~/stores/main";
-
 const store = useMainStore();
 
 const state = ref({
@@ -53,7 +50,7 @@ async function loadData(refreshCache: boolean) {
 
     state.value.error = error;
     if (!error) {
-        state.value.records = toLabelValArray(result, ["sid", "owner_account_sid", "friendly_name", "type", "status", "date_created", "date_updated"]);;
+        state.value.records = toLabelValArray(result, ["sid", "owner_account_sid", "friendly_name", "type", "status", "date_created", "date_updated"]);
     }
 
     state.value.loading = false;

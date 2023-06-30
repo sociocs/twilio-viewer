@@ -105,8 +105,6 @@
 </template>
 
 <script setup lang="ts">
-import { useMainStore } from "~/stores/main";
-
 const store = useMainStore();
 
 const state = ref({

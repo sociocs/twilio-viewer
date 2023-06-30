@@ -23,8 +23,6 @@ useHead({
 });
 
 // critical data points for all the routes needs to be loaded upfront
-import { useMainStore } from "~/stores/main";
-
 const store = useMainStore();
 
 const state = ref({
