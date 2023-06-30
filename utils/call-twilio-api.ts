@@ -28,14 +28,14 @@ export async function callTwilioAPI({ baseUrl, path, method, body, authCredentia
     }
 }
 
-export async function twloFetchSubaccounts() {
-    const [_, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts.json`, refreshCache: true });
+export async function twloFetchSubaccounts(refreshCache = false) {
+    const [_, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts.json`, refreshCache });
 
     return result.accounts;
 }
 
-export async function twloFetchSubaccountsCount() {
-    const subaccounts = await twloFetchSubaccounts();
+export async function twloFetchSubaccountsCount(refreshCache = false) {
+    const subaccounts = await twloFetchSubaccounts(refreshCache);
 
     return subaccounts?.length;
 }
