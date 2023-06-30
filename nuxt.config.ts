@@ -9,6 +9,12 @@ export default defineNuxtConfig({
     }
   },
 
+  imports: {
+    dirs: [
+      "stores",
+    ],
+  },
+
   modules: [
     "@invictus.codes/nuxt-vuetify",
     "@nuxtjs/google-fonts",
