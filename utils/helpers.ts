@@ -39,10 +39,10 @@ const priceFormatter = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 4,
 });
 
-export const formatPrice = (value: number) => {
-    // if (isNaN(value)) {
-    //     value = parseFloat(value);
-    // }
+export const formatPrice = (value: any) => {
+    if (isNaN(value)) {
+        value = parseFloat(value);
+    }
 
     return priceFormatter.format(value);
 };
