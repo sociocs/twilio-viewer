@@ -11,6 +11,9 @@ export interface SubAccount {
     sid: string;
     owner_account_sid: string;
     name: string;
+    status: string;
+    created_at: number,
+    loaded_at: number,
 }
 
 export class MySubClassedDexie extends Dexie {
