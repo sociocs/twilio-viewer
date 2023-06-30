@@ -145,8 +145,8 @@ const state = ref({
     tab: "new",
 
     form: {
-        account_sid: "AC004190678d1e4d4632a2922184d6b1ee",
-        auth_token: "9d0bb71e180f8a6da95b112935141202",
+        account_sid: "",
+        auth_token: "",
         connection_name: "",
     },
 
@@ -184,7 +184,7 @@ async function connect() {
         store.newConnection(state.value.form.account_sid, state.value.form.auth_token, state.value.form.connection_name);
 
         // add subaccount count in the account info for display
-        const subaccountCount = await twloFetchSubaccountsCount();
+        const subaccountCount = await twloFetchSubaccountsCount(true);
         state.value.connect_result.account_info.push({
             label: "subaccount_count",
             value: subaccountCount,

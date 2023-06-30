@@ -12,7 +12,7 @@ export const useMainStore = defineStore("main", () => {
     const accounts_and_sub = ref([] as Array<any>)
 
     async function _fetchAndSaveSubaccounts() {
-        const subaccountsRaw = await twloFetchSubaccounts()
+        const subaccountsRaw = await twloFetchSubaccounts(true);
 
         const subaccounts = [];
 
