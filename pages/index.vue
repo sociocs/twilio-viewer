@@ -1,0 +1,139 @@
+<template>
+    <v-app-bar title="Auth"></v-app-bar>
+
+    <v-main>
+        <v-container fluid>
+            <!-- data loading -->
+            <v-sheet v-if="state.loading" class="text-center">
+                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            </v-sheet>
+
+            <v-sheet v-else>
+                <!-- tab menu -->
+                <v-tabs v-model="state.tab" color="primary">
+                    <v-tab value="new">New</v-tab>
+                    <v-tab value="saved">Saved</v-tab>
+                </v-tabs>
+
+                <v-window v-model="state.tab">
+                    <!-- new connection setup -->
+                    <v-window-item value="new">
+                        <v-sheet class="py-4">
+                            <!-- new connection form -->
+                            <v-form @submit.prevent="connect">
+                                <template v-if="!store.saved_connections?.length">
+                                    <v-alert type="info" title="Important Information" icon="mdi-firework" variant="tonal"
+                                        class="mb-4">
+                                        <template v-slot:text>
+                                            <ul>
+                                                <li>- This is an open source FREE tool. Code available on <a
+                                                        href="https://github.com/sociocs/twilio-viewer"
+                                                        target="_blank">GitHub</a>.
+                                                </li>
+                                                <li>
+                                                    - All your information and data stays locally on your browser.
+                                                </li>
+                                                <li>
+                                                    - It uses Twilio APIs directly from the browser to fetch data.
+                                                    No third party servers are involved.
+                                                </li>
+                                                <li>
+                                                    - A commercial solution (with a FREE plan) for two-way Twilio
+                                                    text messaging, bulk messaging and more is available <a
+                                                        href="https://www.sociocs.com/" target="_blank">here</a>.
+                                                </li>
+                                            </ul>
+                                        </template>
+                                    </v-alert>
+                                </template>
+                                <v-text-field v-model="state.form.account_sid" label="Account SID"
+                                    :rules="[v => !!v || 'Required.']"></v-text-field>
+                                <v-text-field v-model="state.form.auth_token" label="Auth token"
+                                    :rules="[v => !!v || 'Required.']"></v-text-field>
+                                <v-btn type="submit" class="mt-2" color="primary" :loading="state.processing"
+                                    :disabled="state.processing">Connect</v-btn>
+                            </v-form>
+                        </v-sheet>
+                    </v-window-item>
+
+                    <!-- exiting connections listing -->
+                    <v-window-item value="saved">
+                        <v-sheet v-if="!store.saved_connections?.length" class="text-center py-4">
+                            <v-alert text="There are no records available."></v-alert>
+                        </v-sheet>
+                        <v-sheet v-else class="py-4">
+                            <table is="vue:v-table">
+                                <thead>
+                                    <tr>
+                                        <th>Account SID</th>
+                                        <th>Name</th>
+                                        <th class="text-center">Currently using?</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="connection in store.saved_connections" :key="connection.account_sid">
+                                        <td>{{ connection.account_sid }}</td>
+                                        <td>{{ connection.name }}</td>
+                                        <td class="text-center">
+                                            <v-icon icon="mdi-check-bold" v-if="connection.in_use"
+                                                title="Currently using this account." color="green-darken-2">
+                                            </v-icon>
+                                            <span v-else>
+                                                <a href="#" @click.prevent.stop="switchConnection(connection.account_sid)"
+                                                    title="Switch to this account.">Use</a>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <v-btn size="x-small" icon="mdi-delete" color="red" title="Remove account."
+                                                @click="removeConnection(connection.account_sid)" :loading="state.removing"
+                                                :disabled="state.removing" class="me-5">
+                                            </v-btn>
+                                            <v-btn size="x-small" icon="mdi-chevron-right" color="secondary"
+                                                title="View subaccounts." :to="'/subaccounts/' + connection.account_sid">
+                                            </v-btn>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </v-sheet>
+                    </v-window-item>
+                </v-window>
+            </v-sheet>
+        </v-container>
+    </v-main>
+</template>
+
+<script setup lang="ts">
+import { useMainStore } from "~/stores/main";
+
+const store = useMainStore();
+
+const state = ref({
+    loading: false,
+    processing: false,
+    tab: "new",
+    form: {
+        account_sid: "",
+        auth_token: "",
+    },
+    removing: false,
+});
+
+onMounted(() => {
+    // when there are saved connectinos, switch to the listing tab
+    if (store.saved_connections.length) {
+        state.value.tab = "saved";
+    }
+});
+
+function connect() {
+    console.log("connected");
+}
+
+function switchConnection(accountSid: string) { }
+
+function removeConnection(accountSid: string) { }
+
+</script>
+  

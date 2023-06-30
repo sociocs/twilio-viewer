@@ -1,0 +1,1 @@
+export type AuthCredentials = { account_sid: string, auth_token: string };

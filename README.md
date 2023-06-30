@@ -23,8 +23,8 @@ Twilio console offers a great lot of functionality, however, it's not convenient
 ## Development stack
 
 1. Vue.js 3 (<https://vuejs.org/>)
+1. Nuxt 3 (<https://nuxt.com/>)
 1. Vuetify 3 (<https://vuetifyjs.com/en/>)
-1. Vue Router (<https://router.vuejs.org/>)
 1. Twilio REST APIs (<https://www.twilio.com/docs/usage/api>)
 1. IndexedDB (<https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB>)
 1. Dexie.js for IndexedDB (<https://dexie.org/>)

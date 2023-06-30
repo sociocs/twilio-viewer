@@ -1,1 +1,1 @@
-npx serve
+npm run dev
