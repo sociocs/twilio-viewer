@@ -1,5 +1,5 @@
 <template>
-    <v-app-bar title="Message history">
+    <v-app-bar title="Voice call history">
         <template v-slot:append>
             <AccountPickList v-model="store.active_account_sid" :accounts_and_sub="store.accounts_and_sub">
             </AccountPickList>
@@ -57,9 +57,9 @@
                         <th class="text-center">Direction</th>
                         <th>From</th>
                         <th>To</th>
-                        <th>Body</th>
-                        <th>Date</th>
-                        <th class="text-center">Segments</th>
+                        <th>Start time</th>
+                        <th>End time</th>
+                        <th class="text-center">Duration</th>
                         <th class="text-center">Status</th>
                         <th class="text-center">Price</th>
                     </tr>
@@ -75,50 +75,10 @@
                         <td class="text-center">{{ r.direction }}</td>
                         <td>{{ r.from }}</td>
                         <td>{{ r.to }}</td>
-                        <td>
-                            <div v-if="r.body">
-                                {{ r.body }}
-                            </div>
-                            <template v-if="hasMedia(r.num_media)">
-                                <template v-if="r.media_loading">
-                                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                                </template>
-                                <template v-else-if="r.media_list">
-                                    <v-list lines="one">
-                                        <v-list-item :href="media.link" target="_blank" v-for="media in r.media_list"
-                                            :key="media.sid" :title="media.sid" :subtitle="media.content_type">
-                                            <template v-slot:prepend>
-                                                <v-icon color="primary" :icon="icon(media.content_type)"></v-icon>
-                                            </template>
-                                        </v-list-item>
-                                    </v-list>
-                                </template>
-                                <template v-else>
-                                    <v-btn variant="text" icon="mdi-attachment" @click="refreshMediaList(r.sid)">
-                                    </v-btn>
-                                </template>
-                            </template>
-                        </td>
-                        <td :title="r.date_updated">{{ localDate(r.date_updated) }}</td>
-                        <td class="text-center">{{ r.num_segments }}</td>
-                        <td class="text-center">
-                            <div>
-                                {{ r.status }}
-                            </div>
-                            <template v-if="r.error_message">
-                                <span class="text-error">
-                                    {{ r.error_message }}
-                                </span>
-                            </template>
-                            <template v-if="r.error_code">
-                                <div>
-                                    <v-chip class="my-1" size="small" color="error" :href="errorPageUrl(r.error_code)"
-                                        target="_blank">
-                                        Error code {{ r.error_code }}
-                                    </v-chip>
-                                </div>
-                            </template>
-                        </td>
+                        <td :title="r.start_time">{{ localDate(r.start_time) }}</td>
+                        <td :title="r.end_time">{{ localDate(r.end_time) }}</td>
+                        <td class="text-center">{{ duration(r.duration) }}</td>
+                        <td class="text-center">{{ r.status }}</td>
                         <td class="text-center">{{ price(r) }}</td>
                     </tr>
                 </tbody>
@@ -149,7 +109,7 @@ const state = ref({
     next_page_uri: "",
 });
 
-async function loadData(refreshCache: boolean, { path = `/2010-04-01/Accounts/${store.active_account_sid}/Messages.json?PageSize=${state.value.page_size}`, appendResults = false } = {}) {
+async function loadData(refreshCache: boolean, { path = `/2010-04-01/Accounts/${store.active_account_sid}/Calls.json?PageSize=${state.value.page_size}`, appendResults = false } = {}) {
     const [error, result] = await callTwilioAPI({ path, refreshCache });
 
     state.value.error = error;
@@ -160,9 +120,9 @@ async function loadData(refreshCache: boolean, { path = `/2010-04-01/Accounts/${
     } else {
         // when appendResults is asked, append to the records instead of replacing
         if (appendResults) {
-            (result.messages as Array<any>).forEach(x => state.value.records.push(x));
+            (result.calls as Array<any>).forEach(x => state.value.records.push(x));
         } else {
-            state.value.records = result.messages;
+            state.value.records = result.calls;
         }
 
         // save next page uril for pagination
@@ -204,14 +164,14 @@ async function search() {
         searchList.push(`To=${form.to}`);
     }
     if (form.from_date) {
-        searchList.push(`DateSent>=${form.from_date}`);
+        searchList.push(`StartTime>=${form.from_date}`);
     }
     if (form.to_date) {
-        searchList.push(`DateSent<=${form.to_date}`);
+        searchList.push(`EndTime<=${form.to_date}`);
     }
     const searchStr = searchList.join("&");
 
-    await loadData(true, { path: `/2010-04-01/Accounts/${store.active_account_sid}/Messages.json?PageSize=${state.value.page_size}&${searchStr}` });
+    await loadData(true, { path: `/2010-04-01/Accounts/${store.active_account_sid}/Calls.json?PageSize=${state.value.page_size}&${searchStr}` });
 
     state.value.searching = false;
 }
@@ -230,59 +190,13 @@ function loadMore() {
     }, 500);
 }
 
+function duration(val: any) {
+    return val + "s";
+}
+
 function price(record: any) {
     const formattedPrice = record.price ? formatPrice(record.price) : "-";
 
     return `${record.price_unit?.toUpperCase()} ${formattedPrice}`;
-}
-
-function hasMedia(val: string) {
-    return parseInt(val || "0") > 0;
-}
-
-async function refreshMediaList(sid: string) {
-    // find the message record
-    const message = state.value.records.find(x => x.sid === sid);
-
-    if (!message) {
-        return;
-    }
-
-    // show spinner
-    message.media_loading = true;
-
-    const [_, result] = await callTwilioAPI({ path: message.subresource_uris.media });
-
-    if (result) {
-        // for each media create a URL entry
-        message.media_list = result.media_list;
-
-        (message.media_list as Array<any>).forEach(m => {
-            m.link = `https://api.twilio.com${m.uri.replace(".json", "")}`;
-        });
-
-        // hide spinner
-        message.media_loading = false;
-    }
-}
-
-function icon(contentType: string) {
-    if (contentType.startsWith("image")) {
-        return "mdi-file-image";
-    }
-
-    if (contentType.startsWith("video")) {
-        return "mdi-file-video";
-    }
-
-    if (contentType.startsWith("audio")) {
-        return "mdi-file-music";
-    }
-
-    return "mdi-file";
-}
-
-function errorPageUrl(code: any) {
-    return `https://www.twilio.com/docs/errors/${code}`;
 }
 </script>
