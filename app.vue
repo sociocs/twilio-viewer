@@ -43,4 +43,8 @@ table .v-list-item-subtitle {
 table .v-list-item-title {
   font-size: .9rem;
 }
+
+.v-autocomplete__selection {
+  max-width: 100%!important;
+}
 </style>

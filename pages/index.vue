@@ -54,6 +54,35 @@
                                     :disabled="state.processing">Connect</v-btn>
                             </v-form>
                         </v-sheet>
+
+                        <v-sheet v-if="!state.processing && state.connect_result.account_info" class="pa-1">
+                            <v-card title="Account information">
+                                <v-card-text>
+                                    <table is="vue:v-table">
+                                        <tbody>
+                                            <tr v-for="item in state.connect_result.account_info">
+                                                <th>{{ item.label }}</th>
+                                                <td>{{ item.value }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </v-card-text>
+                            </v-card>
+                            <v-card title="Save connection (optional)" class="mt-4">
+                                <v-card-text>
+                                    <v-alert
+                                        text="Note: Twilio account SID and auth token are saved in plain text in your browser's database."
+                                        type="warning" :icon="false" class="mb-3"></v-alert>
+
+                                    <v-form @submit.prevent="saveConnection">
+                                        <v-text-field v-model="state.form.connection_name" label="Connection name"
+                                            :rules="[v => !!v || 'Required.']"></v-text-field>
+                                        <v-btn type="submit" class="mt-2" color="primary" :loading="state.processing"
+                                            :disabled="state.processing">Save</v-btn>
+                                    </v-form>
+                                </v-card-text>
+                            </v-card>
+                        </v-sheet>
                     </v-window-item>
 
                     <!-- exiting connections listing -->
@@ -80,7 +109,8 @@
                                                 title="Currently using this account." color="green-darken-2">
                                             </v-icon>
                                             <span v-else>
-                                                <a href="#" @click.prevent.stop="switchConnection(connection.account_sid)"
+                                                <a href="#"
+                                                    @click.prevent.stop="store.switchInUseConnection(connection.account_sid)"
                                                     title="Switch to this account.">Use</a>
                                             </span>
                                         </td>
@@ -110,12 +140,17 @@ const store = useMainStore();
 const state = ref({
     loading: false,
     processing: false,
-    tab: "new",
-    form: {
-        account_sid: "",
-        auth_token: "",
-    },
     removing: false,
+
+    tab: "new",
+
+    form: {
+        account_sid: "AC004190678d1e4d4632a2922184d6b1ee",
+        auth_token: "9d0bb71e180f8a6da95b112935141202",
+        connection_name: "",
+    },
+
+    connect_result: {} as Record<string, any>,
 });
 
 onMounted(() => {
@@ -125,13 +160,75 @@ onMounted(() => {
     }
 });
 
-function connect() {
-    console.log("connected");
+async function connect() {
+    if (!state.value.form.account_sid || !state.value.form.auth_token) {
+        return;
+    }
+
+    state.value.processing = true;
+    state.value.connect_result = {};
+
+    // get account info using the provided credentials
+    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${state.value.form.account_sid}.json`, authCredentials: state.value.form, refreshCache: true });
+
+    if (error) {
+        state.value.connect_result.error = error;
+    } else if (result.status) {
+        // set state account info for the display
+        state.value.connect_result.account_info = toLabelValArray(result, ["friendly_name", "status", "date_created"]);
+
+        // set state connection name for the saving form
+        state.value.form.connection_name = result.friendly_name;
+
+        // update store variables
+        store.newConnection(state.value.form.account_sid, state.value.form.auth_token, state.value.form.connection_name);
+
+        // add subaccount count in the account info for display
+        const subaccountCount = await twloFetchSubaccountsCount();
+        state.value.connect_result.account_info.push({
+            label: "subaccount_count",
+            value: subaccountCount,
+        });
+    }
+
+    state.value.processing = false;
 }
 
-function switchConnection(accountSid: string) { }
+function resetFormData() {
+    const form = state.value.form;
 
-function removeConnection(accountSid: string) { }
+    form.account_sid = "";
+    form.auth_token = "";
+    form.connection_name = "";
+    state.value.connect_result = {};
+}
+
+async function saveConnection() {
+    const form = state.value.form;
+
+    if (!form.account_sid || !form.auth_token || !form.connection_name) {
+        return;
+    }
+
+    const connectionInfo = state.value.connect_result.account_info;
+
+    // save connection in store and db
+    await store.saveConnection(form.account_sid, form.auth_token, form.connection_name, connectionInfo.status, (new Date(connectionInfo.date_created)).getTime(), true);
+
+    // switch to saved tab
+    state.value.tab = "saved";
+
+    // reset form
+    resetFormData();
+}
+
+async function removeConnection(accountSid: string) {
+    state.value.removing = true;
+
+    await store.removeConnection(accountSid);
+
+    state.value.removing = false;
+}
 
 </script>
   

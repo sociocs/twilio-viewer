@@ -3,7 +3,7 @@ import { AuthCredentials } from "./types";
 
 // Calls given Twilio API path
 // When credentials are not passed, reads it from the store
-export const callTwilioAPI = async function ({ baseUrl, path, method, body, authCredentials, refreshCache }: { baseUrl?: string, path: string, method?: string, body?: string, authCredentials?: AuthCredentials, refreshCache?: boolean }) {
+export async function callTwilioAPI({ baseUrl, path, method, body, authCredentials, refreshCache }: { baseUrl?: string, path: string, method?: string, body?: string, authCredentials?: AuthCredentials, refreshCache?: boolean }) {
     try {
         const store = useMainStore();
 
@@ -26,4 +26,16 @@ export const callTwilioAPI = async function ({ baseUrl, path, method, body, auth
     } catch (error) {
         return [error, null];
     }
+}
+
+export async function twloFetchSubaccounts() {
+    const [_, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts.json`, refreshCache: true });
+
+    return result.accounts;
+}
+
+export async function twloFetchSubaccountsCount() {
+    const subaccounts = await twloFetchSubaccounts();
+
+    return subaccounts?.length;
 }
