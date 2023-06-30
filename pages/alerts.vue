@@ -183,4 +183,30 @@ function loadMore() {
         state.value.loading_more = false;
     }, 500);
 }
+
+function alertTextTokens(val: string) {
+    if (!val) {
+        return [{ value: "None" }];
+    }
+
+    const tokens = val.split("&");
+
+    if (tokens?.length) {
+        return tokens.map(x => {
+            const keyVal = x.split("=");
+
+            const result = {
+                label: keyVal[0],
+            } as Record<string, string>;
+
+            if (keyVal.length > 1) {
+                result.value = decodeURIComponent(keyVal[1]).replace(/\+/g, " ");
+            }
+
+            return result;
+        });
+    }
+
+    return [{ label: val }];
+}
 </script>
