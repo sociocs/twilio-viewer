@@ -1,5 +1,5 @@
 <template>
-    <v-app-bar title="Message history">
+    <v-app-bar title="Billing">
         <template v-slot:append>
             <v-sheet color="green-lighten-3" rounded class="pa-1 ps-3 mr-4 d-flex align-center">
                 <span class="mr-2 font-weight-bold">Balance</span>
@@ -231,6 +231,9 @@ function defaultDates() {
 
 // load initial data
 onMounted(async () => {
+    // make sure it's not a subaccount
+    const conn = await dbGetConnection(store.account_sid);
+
     const defaultDts = defaultDates();
 
     // read preference and assing default values if needed
