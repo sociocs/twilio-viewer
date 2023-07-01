@@ -148,6 +148,14 @@ const state = ref({
     next_page_url: "",
 });
 
+function loadingOn() {
+    state.value.loading = true;
+}
+
+function loadingOff() {
+    state.value.loading = false;
+}
+
 async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
     // const [error, result] = await callTwilioAPI({ path, refreshCache });
     const [error, result] = await twloFetchMessages({ accountSid: store.active_account_sid, from: state.value.form.from, to: state.value.form.to, fromDate: state.value.form.from_date, toDate: state.value.form.to_date, nextPageUrl: state.value.next_page_url, refreshCache });
@@ -173,20 +181,26 @@ async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
 function refresh() {
     state.value.next_page_url = "";
 
-    state.value.loading = true;
+    loadingOn();
 
-    loadData(true).then(() => state.value.loading = false);
+    loadData(true).then(() => loadingOff());
 }
 
 // load initial data
 onMounted(() => {
-    loadData(false).then(() => state.value.loading = false);
+    loadData(false).then(() => loadingOff());
 })
 
 // when store.active_account_sid changes, data should refreshed
 watch(
     () => store.active_account_sid,
-    () => loadData(false),
+    async () => {
+        loadingOn();
+
+        await loadData(false);
+
+        loadingOff()
+    },
 )
 
 async function search() {
