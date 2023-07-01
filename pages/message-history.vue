@@ -156,6 +156,10 @@ function loadingOff() {
     state.value.loading = false;
 }
 
+function setNextPageUrl(value: string) {
+    state.value.next_page_url = value;
+}
+
 async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
     // const [error, result] = await callTwilioAPI({ path, refreshCache });
     const [error, result] = await twloFetchMessages({ accountSid: store.active_account_sid, from: state.value.form.from, to: state.value.form.to, fromDate: state.value.form.from_date, toDate: state.value.form.to_date, nextPageUrl: state.value.next_page_url, refreshCache });
@@ -164,7 +168,7 @@ async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
 
     if (error) {
         // when there is an error, pagination should stop
-        state.value.next_page_url = "";
+        setNextPageUrl("");
     } else {
         // when appendResults is asked, append to the records instead of replacing
         if (appendResults) {
@@ -174,12 +178,12 @@ async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
         }
 
         // save next page uril for pagination
-        state.value.next_page_url = result.next_page_uri;
+        setNextPageUrl(result.next_page_uri);
     }
 }
 
 function refresh() {
-    state.value.next_page_url = "";
+    setNextPageUrl("");
 
     loadingOn();
 
@@ -197,6 +201,8 @@ watch(
     async () => {
         loadingOn();
 
+        setNextPageUrl("");
+
         await loadData(false);
 
         loadingOff()
@@ -204,7 +210,7 @@ watch(
 )
 
 async function search() {
-    state.value.next_page_url = "";
+    setNextPageUrl("");
     const form = state.value.form;
 
     if (!form.from && !form.to && !form.from_date && !form.to_date) {
