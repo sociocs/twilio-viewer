@@ -3,9 +3,14 @@
         <template v-slot:append>
             <v-sheet color="green-lighten-3" rounded class="pa-1 ps-3 mr-4 d-flex align-center">
                 <span class="mr-2 font-weight-bold">Balance</span>
-                <span class="mr-2" v-if="!state.loading_balance">{{ balanceStr() }}</span>
-                <v-btn size="small" variant="text" icon="mdi-cached" :loading="state.loading_balance"
-                    :disabled="state.loading_balance" @click="balanceRefresh" title="Refresh balance."></v-btn>
+                <template v-if="state.balance_error">
+                    <v-icon icon="mdi-alert" :title="balanceErrorDesc()"></v-icon>
+                </template>
+                <template v-else>
+                    <span class="mr-2" v-if="!state.loading_balance">{{ balanceStr() }}</span>
+                    <v-btn size="small" variant="text" icon="mdi-cached" :loading="state.loading_balance"
+                        :disabled="state.loading_balance" @click="balanceRefresh" title="Refresh balance."></v-btn>
+                </template>
             </v-sheet>
             <AccountPickList v-model="store.active_account_sid" :accounts_and_sub="store.accounts_and_sub">
             </AccountPickList>
@@ -143,6 +148,7 @@ const state = ref({
         include_subaccounts: false,
     },
     error: "",
+    balance_error: "",
     balance: {} as Record<string, any>,
     records: [] as Array<any>,
     totals_record: {} as Record<string, any>,
@@ -155,9 +161,9 @@ async function loadBalance(refreshCache: boolean) {
     // get balance
     const [error, result] = await twloFetchAccountBalance({ accountSid: store.account_sid, refreshCache });
 
-    if (error) {
-        state.value.error = error;
-    } else {
+    state.value.balance_error = error;
+
+    if (!error) {
         state.value.balance = result;
     }
 
@@ -252,7 +258,7 @@ onMounted(async () => {
 // when store.active_account_sid changes, data should refreshed
 watch(
     () => store.active_account_sid,
-    () => loadData(false)
+    () => loadData(false),
 )
 
 // when form field changes, save them to local storage for quick page loading next time
@@ -273,6 +279,14 @@ function balanceRefresh() {
     state.value.loading_balance = true;
 
     loadBalance(true).then(() => state.value.loading_balance = false);
+}
+
+function balanceErrorDesc() {
+    if (state.value.balance_error === "404 Not Found") {
+        return "Balance information is not available. This is most likely because you have connected a subaccount, which doesn't offer balance details. Connect a primary account to see the balance.";
+    }
+
+    return state.value.balance_error;
 }
 
 function setDates(option: string) {
