@@ -166,3 +166,29 @@ export function twloFetchEvents({ accountSid, eventType, resourceSid, fromDate, 
 
     return callTwilioAPI({ baseUrl, path, refreshCache });
 }
+
+export function twloFetchAccountBalance({ accountSid, refreshCache }: { accountSid: string, refreshCache?: boolean }) {
+    return callTwilioAPI({ path: `/2010-04-01/Accounts/${accountSid}/Balance.json`, refreshCache });
+}
+
+export function twloFetchUsageRecords({ accountSid, fromDate, toDate, includeSubaccounts, refreshCache }: { accountSid: string, fromDate: string, toDate: string, includeSubaccounts: boolean, refreshCache?: boolean }) {
+    let path = `/2010-04-01/Accounts/${accountSid}/Usage/Records.json`;
+
+    const searchParams = new URLSearchParams({ PageSize: "1000" });
+
+    if (fromDate) {
+        searchParams.append("StartDate", fromDate);
+    }
+    if (toDate) {
+        searchParams.append("EndDate", toDate);
+    }
+
+    searchParams.append("IncludeSubaccounts", includeSubaccounts ? "true" : "false");
+
+    const qs = searchParams.toString();
+    if (qs) {
+        path += "?" + qs;
+    }
+
+    return callTwilioAPI({ path, refreshCache });
+}
