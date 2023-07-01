@@ -134,3 +134,35 @@ export function twloFetchAlerts({ accountSid, logLevel, fromDate, toDate, nextPa
 
     return callTwilioAPI({ baseUrl, path, refreshCache });
 }
+
+export function twloFetchEvents({ accountSid, eventType, resourceSid, fromDate, toDate, nextPageUrl, refreshCache }: { accountSid: string, eventType?: string, resourceSid?: string, fromDate?: string, toDate?: string, nextPageUrl?: string, refreshCache?: boolean }) {
+    let baseUrl = "https://monitor.twilio.com/v1";
+    let path = `/Events?AccountSID=${accountSid}`;
+
+    if (nextPageUrl) {
+        baseUrl = nextPageUrl;
+        path = "";
+    } else {
+        const searchParams = new URLSearchParams();
+
+        if (eventType) {
+            searchParams.append("EventType", eventType);
+        }
+        if (resourceSid) {
+            searchParams.append("ResourceSid", resourceSid);
+        }
+        if (fromDate) {
+            searchParams.append("StartDate", fromDate);
+        }
+        if (toDate) {
+            searchParams.append("EndDate", toDate);
+        }
+
+        const qs = searchParams.toString();
+        if (qs) {
+            path += "&" + qs;
+        }
+    }
+
+    return callTwilioAPI({ baseUrl, path, refreshCache });
+}
