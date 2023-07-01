@@ -1,10 +1,10 @@
 <template>
     <v-app-bar title="Billing">
         <template v-slot:append>
-            <v-sheet color="green-lighten-3" rounded class="pa-1 ps-3 mr-4 d-flex align-center">
+            <v-sheet color="green-lighten-3" rounded class="pa-1 ps-3 mr-4 d-flex align-center" :title="balanceTitle()">
                 <span class="mr-2 font-weight-bold">Balance</span>
                 <template v-if="state.balance_error">
-                    <v-icon icon="mdi-alert" :title="balanceErrorDesc()"></v-icon>
+                    <v-icon icon="mdi-alert"></v-icon>
                 </template>
                 <template v-else>
                     <span class="mr-2" v-if="!state.loading_balance">{{ balanceStr() }}</span>
@@ -281,12 +281,16 @@ function balanceRefresh() {
     loadBalance(true).then(() => state.value.loading_balance = false);
 }
 
-function balanceErrorDesc() {
-    if (state.value.balance_error === "404 Not Found") {
-        return "Balance information is not available. This is most likely because you have connected a subaccount, which doesn't offer balance details. Connect a primary account to see the balance.";
-    }
+function balanceTitle() {
+    if (state.value.balance_error) {
+        if (state.value.balance_error === "404 Not Found") {
+            return "Balance information is not available. This is most likely because you have connected a subaccount, which doesn't offer balance details. Connect a primary account to see the balance.";
+        }
 
-    return state.value.balance_error;
+        return state.value.balance_error;
+    } else {
+        return "Primary account's balance.";
+    }
 }
 
 function setDates(option: string) {
