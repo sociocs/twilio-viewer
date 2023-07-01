@@ -1,7 +1,7 @@
 <template>
     <v-app-bar title="Alerts">
         <template v-slot:append>
-            <AccountPickList v-model="store.active_account_sid" :accounts_and_sub="store.accounts_and_sub" :disabled="true">
+            <AccountPickList v-model="store.account_sid" :accounts_and_sub="store.accounts_and_sub" :disabled="true">
             </AccountPickList>
             <Refresh :loading="state.loading" @click="refresh"></Refresh>
         </template>

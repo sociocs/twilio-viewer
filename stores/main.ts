@@ -100,7 +100,7 @@ export const useMainStore = defineStore("main", () => {
 
                 // populate all accounts list
                 // accounts_and_sub.value = [{ sid: account_sid.value, name: connection_name.value }].concat(subaccounts.value);
-                accounts_and_sub.value = [{ sid: account_sid.value, name: connection_name.value }].concat([{ sid: account_sid.value + "1", name: connection_name.value }]);
+                accounts_and_sub.value = [{ sid: account_sid.value, name: connection_name.value }].concat([{ sid: account_sid.value + "1", name: connection_name.value + "1" }]);
             }
         }
 

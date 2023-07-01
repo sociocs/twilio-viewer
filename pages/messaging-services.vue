@@ -1,7 +1,7 @@
 <template>
     <v-app-bar title="Messaging services">
         <template v-slot:append>
-            <AccountPickList v-model="store.active_account_sid" :accounts_and_sub="store.accounts_and_sub">
+            <AccountPickList v-model="store.account_sid" :accounts_and_sub="store.accounts_and_sub" :disabled="true">
             </AccountPickList>
             <Refresh :loading="state.loading" @click="loadData(true)"></Refresh>
         </template>
