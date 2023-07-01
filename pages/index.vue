@@ -169,7 +169,7 @@ async function connect() {
     state.value.connect_result = {};
 
     // get account info using the provided credentials
-    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${state.value.form.account_sid}.json`, authCredentials: state.value.form, refreshCache: true });
+    const [error, result] = await twloFetchAccount({ accountSid: state.value.form.account_sid, authCredentials: state.value.form, refreshCache: true });
 
     if (error) {
         state.value.connect_result.error = error;
@@ -184,10 +184,10 @@ async function connect() {
         store.newConnection(state.value.form.account_sid, state.value.form.auth_token, state.value.form.connection_name);
 
         // add subaccount count in the account info for display
-        const subaccountCount = await twloFetchSubaccountsCount(true);
+        const subaccounts = await twloFetchAccounts({ refreshCache: true });
         state.value.connect_result.account_info.push({
             label: "subaccount_count",
-            value: subaccountCount,
+            value: subaccounts?.length || 0,
         });
     }
 

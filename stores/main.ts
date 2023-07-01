@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { twloFetchSubaccounts } from "~/utils/call-twilio-api";
+import { twloFetchAccounts } from "~/utils/call-twilio-api";
 import { Connection, Subaccount, dbDeleteConnection, dbGetAllConnections, dbGetConnection, dbGetFirstConnection, dbGetSubaccounts, dbResetInUse, dbSaveConnection, dbSaveSubaccounts, dbSetInUse } from "~/utils/db";
 
 export const useMainStore = defineStore("main", () => {
@@ -12,7 +12,7 @@ export const useMainStore = defineStore("main", () => {
     const accounts_and_sub = ref([] as Array<any>)
 
     async function _fetchAndSaveSubaccounts() {
-        const subaccountsRaw = await twloFetchSubaccounts(true);
+        const subaccountsRaw = await twloFetchAccounts({ refreshCache: true });
 
         const subaccounts = [];
 

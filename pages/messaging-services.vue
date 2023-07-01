@@ -68,7 +68,7 @@ const state = ref({
 async function loadData(refreshCache: boolean) {
     state.value.loading = true;
 
-    const [error, result] = await callTwilioAPI({ baseUrl: "https://messaging.twilio.com/v1", path: `/Services?AccountSID=${store.active_account_sid}`, refreshCache });
+    const [error, result] = await twloFetchMessagingServices({ accountSid: store.active_account_sid, refreshCache });
 
     state.value.error = error;
     if (!error) {

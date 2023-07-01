@@ -83,7 +83,7 @@
                     </tr>
                 </tbody>
             </table>
-            <v-layout v-if="state.next_page_uri" v-intersect="loadMore">
+            <v-layout v-if="state.next_page_url" v-intersect="loadMore">
                 <v-progress-linear indeterminate height="6"></v-progress-linear>
             </v-layout>
         </v-sheet>
@@ -105,18 +105,17 @@ const state = ref({
     },
     error: "",
     records: [] as Array<any>,
-    page_size: 20,
-    next_page_uri: "",
+    next_page_url: "",
 });
 
-async function loadData(refreshCache: boolean, { path = `/2010-04-01/Accounts/${store.active_account_sid}/Calls.json?PageSize=${state.value.page_size}`, appendResults = false } = {}) {
-    const [error, result] = await callTwilioAPI({ path, refreshCache });
+async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
+    const [error, result] = await twloFetchCalls({ accountSid: store.active_account_sid, from: state.value.form.from, to: state.value.form.to, fromDate: state.value.form.from_date, toDate: state.value.form.to_date, nextPageUrl: state.value.next_page_url, refreshCache });
 
     state.value.error = error;
 
     if (error) {
         // when there is an error, pagination should stop
-        state.value.next_page_uri = "";
+        state.value.next_page_url = "";
     } else {
         // when appendResults is asked, append to the records instead of replacing
         if (appendResults) {
@@ -126,12 +125,15 @@ async function loadData(refreshCache: boolean, { path = `/2010-04-01/Accounts/${
         }
 
         // save next page uril for pagination
-        state.value.next_page_uri = result.next_page_uri;
+        state.value.next_page_url = result.next_page_uri;
     }
 }
 
 function refresh() {
+    state.value.next_page_url = "";
+
     state.value.loading = true;
+
     loadData(true).then(() => state.value.loading = false);
 }
 
@@ -147,47 +149,30 @@ watch(
 )
 
 async function search() {
+    state.value.next_page_url = "";
     const form = state.value.form;
 
     if (!form.from && !form.to && !form.from_date && !form.to_date) {
         return refresh();
     }
 
-    state.value.next_page_uri = "";
     state.value.searching = true;
 
-    const searchList = [];
-    if (form.from) {
-        searchList.push(`From=${form.from}`);
-    }
-    if (form.to) {
-        searchList.push(`To=${form.to}`);
-    }
-    if (form.from_date) {
-        searchList.push(`StartTime>=${form.from_date}`);
-    }
-    if (form.to_date) {
-        searchList.push(`EndTime<=${form.to_date}`);
-    }
-    const searchStr = searchList.join("&");
-
-    await loadData(true, { path: `/2010-04-01/Accounts/${store.active_account_sid}/Calls.json?PageSize=${state.value.page_size}&${searchStr}` });
+    await loadData(true);
 
     state.value.searching = false;
 }
 
-function loadMore() {
-    if (!state.value.next_page_uri || state.value.loading_more) {
+async function loadMore(isIntersecting: boolean) {
+    if (!isIntersecting || !state.value.next_page_url || state.value.loading_more) {
         return;
     }
 
     state.value.loading_more = true;
 
-    setTimeout(async () => {
-        loadData(true, { path: state.value.next_page_uri, appendResults: true });
+    await loadData(true, { appendResults: true });
 
-        state.value.loading_more = false;
-    }, 500);
+    state.value.loading_more = false;
 }
 
 function duration(val: any) {

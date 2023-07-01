@@ -46,7 +46,7 @@ const state = ref({
 async function loadData(refreshCache: boolean) {
     state.value.loading = true;
 
-    const [error, result] = await callTwilioAPI({ path: `/2010-04-01/Accounts/${store.active_account_sid}.json`, refreshCache });
+    const [error, result] = await twloFetchAccount({ accountSid: store.active_account_sid, refreshCache });
 
     state.value.error = error;
     if (!error) {
