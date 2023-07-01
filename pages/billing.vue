@@ -153,7 +153,7 @@ async function loadBalance(refreshCache: boolean) {
     state.value.loading_balance = true;
 
     // get balance
-    const [error, result] = await twloFetchAccountBalance({ accountSid: store.active_account_sid, refreshCache });
+    const [error, result] = await twloFetchAccountBalance({ accountSid: store.account_sid, refreshCache });
 
     if (error) {
         state.value.error = error;
@@ -165,6 +165,8 @@ async function loadBalance(refreshCache: boolean) {
 }
 
 async function loadData(refreshCache: boolean) {
+    state.value.loading = true;
+
     state.value.records = [];
 
     const [error, result] = await twloFetchUsageRecords({ accountSid: store.active_account_sid, fromDate: state.value.form.from_date, toDate: state.value.form.to_date, includeSubaccounts: state.value.form.include_subaccounts, refreshCache });
@@ -213,6 +215,8 @@ async function loadData(refreshCache: boolean) {
             sort((a, b) => a.group.localeCompare(b.group)).
             forEach(x => state.value.records.push(x));
     }
+
+    state.value.loading = false;
 }
 
 function defaultDates() {
@@ -239,15 +243,13 @@ onMounted(async () => {
     state.value.form.include_subaccounts = (localStorage.getItem("billing_search_include_subaccounts") === "true") ? true : false;
 
     loadBalance(false);
-    await loadData(false);
-
-    state.value.loading = false
+    loadData(false);
 })
 
 // when store.active_account_sid changes, data should refreshed
 watch(
     () => store.active_account_sid,
-    () => loadData(false),
+    () => loadData(false)
 )
 
 // when form field changes, save them to local storage for quick page loading next time
@@ -321,11 +323,7 @@ async function submit() {
         return;
     }
 
-    state.value.loading = true;
-
     await loadData(true);
-
-    state.value.loading = false;
 }
 
 function balanceStr() {
