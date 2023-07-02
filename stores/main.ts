@@ -11,7 +11,13 @@ export const useMainStore = defineStore("main", () => {
     const subaccounts = ref([] as Array<Subaccount>);
     const accounts_and_sub = ref([] as Array<any>)
 
-    async function _fetchAndSaveSubaccounts() {
+    function newConnection(accountSid: string, authToken: string, connectionName: string) {
+        account_sid.value = active_account_sid.value = accountSid;
+        auth_token.value = authToken;
+        connection_name.value = connectionName;
+    }
+
+    async function fetchAndSaveSubaccounts() {
         const subaccountsRaw = await twloFetchAccounts({ refreshCache: true });
 
         const subaccounts = [];
@@ -34,12 +40,6 @@ export const useMainStore = defineStore("main", () => {
         if (subaccounts.length) {
             await dbSaveSubaccounts(subaccounts);
         }
-    }
-
-    function newConnection(accountSid: string, authToken: string, connectionName: string) {
-        account_sid.value = active_account_sid.value = accountSid;
-        auth_token.value = authToken;
-        connection_name.value = connectionName;
     }
 
     async function removeConnection(accountSid: string) {
@@ -78,7 +78,7 @@ export const useMainStore = defineStore("main", () => {
         });
 
         // save subaccounts
-        _fetchAndSaveSubaccounts();
+        fetchAndSaveSubaccounts();
 
         // fill store with the latest list of connections
         await savedConnectionsFill();
@@ -99,8 +99,8 @@ export const useMainStore = defineStore("main", () => {
                 subaccounts.value = await dbGetSubaccounts(connectionInUse.account_sid);
 
                 // populate all accounts list
-                // accounts_and_sub.value = [{ sid: account_sid.value, name: connection_name.value }].concat(subaccounts.value);
-                accounts_and_sub.value = [{ sid: account_sid.value, name: connection_name.value }].concat([{ sid: account_sid.value + "1", name: connection_name.value }]);
+                accounts_and_sub.value = [{ sid: account_sid.value, name: connection_name.value }].concat(subaccounts.value);
+                // accounts_and_sub.value = [{ sid: account_sid.value, name: connection_name.value }].concat([{ sid: account_sid.value + "1", name: connection_name.value + "1" }]);
             }
         }
 
@@ -130,6 +130,7 @@ export const useMainStore = defineStore("main", () => {
 
         // state methods
         newConnection,
+        fetchAndSaveSubaccounts,
         removeConnection,
         saveConnection,
         savedConnectionsFill,

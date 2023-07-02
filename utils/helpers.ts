@@ -1,5 +1,7 @@
+import { Connection } from "./db";
+
 // converts an object to array of label value pair
-export const toLabelValArray = (object: Record<string, any>, keys: Array<string>) => {
+export function toLabelValArray(object: Record<string, any>, keys: Array<string>) {
     const result = [] as Array<Record<string, string>>;
 
     for (let i = 0; i < keys?.length; i++) {
@@ -12,7 +14,7 @@ export const toLabelValArray = (object: Record<string, any>, keys: Array<string>
 };
 
 // converts a nested object to flat one, useful when rendering data
-export const flattenObject = (ob: Record<string, any>) => {
+export function flattenObject(ob: Record<string, any>) {
     let result = {} as Record<string, any>;
 
     for (const i in ob) {
@@ -30,19 +32,19 @@ export const flattenObject = (ob: Record<string, any>) => {
     return result;
 };
 
-export const localDate = (value: string) => {
+export function localDate(value: string) {
     return (new Date(value)).toLocaleString();
 };
 
-const priceFormatter = new Intl.NumberFormat('en-US', {
+const _priceFormatter = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 4,
     maximumFractionDigits: 4,
 });
 
-export const formatPrice = (value: any) => {
+export function formatPrice(value: any) {
     if (isNaN(value)) {
         value = parseFloat(value);
     }
 
-    return priceFormatter.format(value);
+    return _priceFormatter.format(value);
 };

@@ -1,5 +1,5 @@
 <template>
-    <v-app-bar title="Alerts">
+    <v-app-bar title="Events">
         <template v-slot:append>
             <AccountPickList v-model="store.account_sid" :accounts_and_sub="store.accounts_and_sub" :disabled="true">
             </AccountPickList>
@@ -19,14 +19,13 @@
                 <v-form @submit.prevent="search">
                     <v-row class="align-center">
                         <v-col>
-                            <v-select v-model="state.form.log_level" :items="state.log_level_options" item-title="label"
-                                item-value="value" label="Log level" hide-details="auto" density="compact"
-                                single-line></v-select>
+                            <v-text-field v-model="state.form.event_type" label="Event type" hide-details="auto"
+                                density="compact" placeholder="e.g. phone-number.updated"></v-text-field>
                         </v-col>
 
-                        <v-col>
-                            <v-text-field v-model="state.form.from_date" label="From date" hide-details="auto" type="date"
-                                density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
+                        <v-col cols="12" md="4">
+                            <v-text-field v-model="state.form.resource_sid" label="Resource SID" hide-details="auto"
+                                density="compact" placeholder="e.g. PN12345..."></v-text-field>
                         </v-col>
 
                         <v-col>
@@ -49,33 +48,33 @@
             <table v-else is="vue:v-table">
                 <thead>
                     <tr>
-                        <th class="text-center">Level</th>
+                        <th class="text-center">Event type</th>
                         <th>Resource SID</th>
                         <th>Date</th>
-                        <th>Alert text</th>
-                        <th class="text-center">Error code</th>
+                        <th class="text-center">Source</th>
+                        <th>Actor</th>
+                        <th>Description</th>
+                        <th>More info</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     <tr v-for="r in state.records" :key="r.sid">
-                        <td class="text-center">{{ r.log_level }}</td>
+                        <td class="text-center">{{ r.event_type }}</td>
                         <td>
                             <div style="max-width: 100px;" class="text-truncate" :title="r.resource_sid">
                                 {{ r.resource_sid }}
                             </div>
                         </td>
-                        <td :title="r.date_generated">{{ localDate(r.date_generated) }}</td>
+                        <td :title="r.event_date">{{ localDate(r.event_date) }}</td>
+                        <td class="text-center">{{ r.source }}</td>
+                        <td>{{ actor(r) }}</td>
+                        <td>{{ r.description }}</td>
                         <td>
                             <v-list lines="one" density="compact" variant="text" class="py-0">
-                                <v-list-item v-for="item in alertTextTokens(r.alert_text)" :key="item.label"
+                                <v-list-item v-for="item in eventDataItems(r.event_data)" :key="item.label"
                                     :title="item.label" :subtitle="item.value" class="px-0 text-truncate"></v-list-item>
                             </v-list>
-                        </td>
-                        <td class="text-center">
-                            <a v-if="r.more_info" :href="r.more_info" target="_blank">{{ r.error_code }}</a>
-                            <span v-else-if="r.error_code">{{ r.error_code }}</span>
-                            <span v-else>None</span>
                         </td>
                     </tr>
                 </tbody>
@@ -91,18 +90,12 @@
 const store = useMainStore();
 
 const state = ref({
-    log_level_options: [
-        { label: "All levels", value: "" },
-        { label: "Error", value: "error" },
-        { label: "Warning", value: "warning" },
-        { label: "Notice", value: "notice" },
-        { label: "Debug", value: "debug" },
-    ],
     loading: true,
     searching: false,
     loading_more: false,
     form: {
-        log_level: "",
+        event_type: "",
+        resource_sid: "",
         from_date: "",
         to_date: "",
     },
@@ -112,7 +105,7 @@ const state = ref({
 });
 
 async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
-    const [error, result] = await twloFetchAlerts({ accountSid: store.active_account_sid, logLevel: state.value.form.log_level, fromDate: state.value.form.from_date, toDate: state.value.form.to_date, nextPageUrl: state.value.next_page_url, refreshCache });
+    const [error, result] = await twloFetchEvents({ accountSid: store.active_account_sid, eventType: state.value.form.event_type, resourceSid: state.value.form.resource_sid, fromDate: state.value.form.from_date, toDate: state.value.form.to_date, nextPageUrl: state.value.next_page_url, refreshCache });
 
     state.value.error = error;
 
@@ -122,9 +115,9 @@ async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
     } else {
         // when appendResults is asked, append to the records instead of replacing
         if (appendResults) {
-            (result.alerts as Array<any>).forEach(x => state.value.records.push(x));
+            (result.events as Array<any>).forEach(x => state.value.records.push(x));
         } else {
-            state.value.records = result.alerts;
+            state.value.records = result.events;
         }
 
         // save next page uril for pagination
@@ -149,7 +142,7 @@ async function search() {
     state.value.next_page_url = "";
     const form = state.value.form;
 
-    if (!form.log_level && !form.from_date && !form.to_date) {
+    if (!form.event_type && !form.resource_sid && !form.from_date && !form.to_date) {
         return refresh();
     }
 
@@ -172,29 +165,23 @@ async function loadMore(isIntersecting: boolean) {
     state.value.loading_more = false;
 }
 
-function alertTextTokens(val: string) {
+function actor(record: any) {
+    let result = record.actor_type;
+
+    if (record.actor_sid) {
+        result += " - " + record.actor_sid;
+    }
+
+    return result;
+}
+
+function eventDataItems(val: any) {
     if (!val) {
         return [{ value: "None" }];
     }
 
-    const tokens = val.split("&");
+    const flatObj = flattenObject(val);
 
-    if (tokens?.length) {
-        return tokens.map(x => {
-            const keyVal = x.split("=");
-
-            const result = {
-                label: keyVal[0],
-            } as Record<string, string>;
-
-            if (keyVal.length > 1) {
-                result.value = decodeURIComponent(keyVal[1]).replace(/\+/g, " ");
-            }
-
-            return result;
-        });
-    }
-
-    return [{ label: val }];
+    return toLabelValArray(flatObj, Object.keys(flatObj));
 }
 </script>

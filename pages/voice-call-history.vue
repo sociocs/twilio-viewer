@@ -50,7 +50,7 @@
                 <NoRecordsAlertBox></NoRecordsAlertBox>
             </template>
 
-            <table v-else is="vue:v-table">
+            <table v-else is="vue:v-table" @mouseup="tableMouseupHandler">
                 <thead>
                     <tr>
                         <th>SID</th>
@@ -108,6 +108,18 @@ const state = ref({
     next_page_url: "",
 });
 
+function loadingOn() {
+    state.value.loading = true;
+}
+
+function loadingOff() {
+    state.value.loading = false;
+}
+
+function setNextPageUrl(value: string) {
+    state.value.next_page_url = value;
+}
+
 async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
     const [error, result] = await twloFetchCalls({ accountSid: store.active_account_sid, from: state.value.form.from, to: state.value.form.to, fromDate: state.value.form.from_date, toDate: state.value.form.to_date, nextPageUrl: state.value.next_page_url, refreshCache });
 
@@ -115,7 +127,7 @@ async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
 
     if (error) {
         // when there is an error, pagination should stop
-        state.value.next_page_url = "";
+        setNextPageUrl("");
     } else {
         // when appendResults is asked, append to the records instead of replacing
         if (appendResults) {
@@ -125,31 +137,39 @@ async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
         }
 
         // save next page uril for pagination
-        state.value.next_page_url = result.next_page_uri;
+        setNextPageUrl(result.next_page_uri);
     }
 }
 
 function refresh() {
-    state.value.next_page_url = "";
+    loadingOn();
 
-    state.value.loading = true;
+    setNextPageUrl("");
 
-    loadData(true).then(() => state.value.loading = false);
+    loadData(true).then(() => loadingOff());
 }
 
 // load initial data
 onMounted(() => {
-    loadData(false).then(() => state.value.loading = false);
+    loadData(false).then(() => loadingOff());
 })
 
 // when store.active_account_sid changes, data should refreshed
 watch(
     () => store.active_account_sid,
-    () => loadData(false),
+    async () => {
+        loadingOn();
+
+        setNextPageUrl("");
+
+        await loadData(false);
+
+        loadingOff()
+    },
 )
 
 async function search() {
-    state.value.next_page_url = "";
+    setNextPageUrl("");
     const form = state.value.form;
 
     if (!form.from && !form.to && !form.from_date && !form.to_date) {
@@ -183,5 +203,9 @@ function price(record: any) {
     const formattedPrice = record.price ? formatPrice(record.price) : "-";
 
     return `${record.price_unit?.toUpperCase()} ${formattedPrice}`;
+}
+
+function tableMouseupHandler() {
+    highlightSelectedText(document.getElementsByTagName("table")?.item(0) as Node || undefined);
 }
 </script>
