@@ -50,7 +50,7 @@
                 <NoRecordsAlertBox></NoRecordsAlertBox>
             </template>
 
-            <table v-else is="vue:v-table">
+            <table v-else is="vue:v-table" @mouseup="tableMouseupHandler">
                 <thead>
                     <tr>
                         <th>SID</th>
@@ -203,5 +203,9 @@ function price(record: any) {
     const formattedPrice = record.price ? formatPrice(record.price) : "-";
 
     return `${record.price_unit?.toUpperCase()} ${formattedPrice}`;
+}
+
+function tableMouseupHandler() {
+    highlightSelectedText(document.getElementsByTagName("table")?.item(0) as Node || undefined);
 }
 </script>

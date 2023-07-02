@@ -50,7 +50,7 @@
                 <NoRecordsAlertBox></NoRecordsAlertBox>
             </template>
 
-            <table v-else is="vue:v-table">
+            <table v-else is="vue:v-table" @mouseup="tableMouseupHandler">
                 <thead>
                     <tr>
                         <th>SID</th>
@@ -290,5 +290,9 @@ function icon(contentType: string) {
 
 function errorPageUrl(code: any) {
     return `https://www.twilio.com/docs/errors/${code}`;
+}
+
+function tableMouseupHandler() {
+    highlightSelectedText(document.getElementsByTagName("table")?.item(0) as Node || undefined);
 }
 </script>
