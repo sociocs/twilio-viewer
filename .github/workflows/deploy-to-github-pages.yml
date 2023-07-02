@@ -19,7 +19,7 @@ jobs:
 
       # Pick your own package manager and build script
       - run: npm install
-      - run: npm run build
+      - run: npm run generate
         env:
           NITRO_PRESET: github-pages
 
