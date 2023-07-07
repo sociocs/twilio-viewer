@@ -55,7 +55,10 @@
                             </v-form>
                         </v-sheet>
 
-                        <v-sheet v-if="!state.processing && state.connect_result.account_info" class="pa-1">
+                        <template v-if="state.connect_result.error">
+                            <ErrorAlertBox :text="state.connect_result.error"></ErrorAlertBox>
+                        </template>
+                        <v-sheet v-else-if="!state.processing && state.connect_result.account_info" class="pa-1">
                             <v-card title="Account information">
                                 <v-card-text>
                                     <table is="vue:v-table">
