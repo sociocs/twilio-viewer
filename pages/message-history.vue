@@ -275,9 +275,11 @@ async function search() {
 
 async function exportMessages() {
   state.value.exporting = true;
-  // call the api to get data until we can get
+
   let results = Array();
   let next_page_uri = "";
+  const { book } = prepareWorkBook();
+  let sheet;
   do {
     const [error, result] = await twloFetchMessages({
       accountSid: store.active_account_sid,
@@ -293,7 +295,11 @@ async function exportMessages() {
     } else {
       next_page_uri = result.next_page_uri;
     }
-    results = results.concat(result);
+    // appendContentWorkBook({
+    //   book: book,
+    //   sheet: sheet,
+    //   messages: result.messages
+    // });
   } while (next_page_uri);
 
   state.value.exporting = false;
