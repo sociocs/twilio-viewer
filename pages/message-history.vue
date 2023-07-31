@@ -1,10 +1,7 @@
 <template>
   <v-app-bar title="Message history">
     <template v-slot:append>
-      <AccountPickList
-        v-model="store.active_account_sid"
-        :accounts_and_sub="store.accounts_and_sub"
-      ></AccountPickList>
+      <AccountPickList v-model="store.active_account_sid" :accounts_and_sub="store.accounts_and_sub"></AccountPickList>
       <Refresh :loading="state.loading" @click="refresh"></Refresh>
     </template>
   </v-app-bar>
@@ -21,66 +18,33 @@
         <v-form @submit.prevent="search">
           <v-row class="align-center">
             <v-col>
-              <v-text-field
-                v-model="state.form.from"
-                label="From number"
-                hide-details="auto"
-                density="compact"
-                placeholder="e.g. 16319999998"
-              ></v-text-field>
+              <v-text-field v-model="state.form.from" label="From number" hide-details="auto" density="compact"
+                placeholder="e.g. 16319999998"></v-text-field>
             </v-col>
 
             <v-col>
-              <v-text-field
-                v-model="state.form.to"
-                label="To number"
-                hide-details="auto"
-                density="compact"
-                placeholder="e.g. 16319999999"
-              ></v-text-field>
+              <v-text-field v-model="state.form.to" label="To number" hide-details="auto" density="compact"
+                placeholder="e.g. 16319999999"></v-text-field>
             </v-col>
 
             <v-col>
-              <v-text-field
-                v-model="state.form.from_date"
-                label="From date"
-                hide-details="auto"
-                type="date"
-                density="compact"
-                placeholder="e.g. 2023-03-01"
-              ></v-text-field>
+              <v-text-field v-model="state.form.from_date" label="From date" hide-details="auto" type="date"
+                density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
             </v-col>
 
             <v-col>
-              <v-text-field
-                v-model="state.form.to_date"
-                label="To date"
-                hide-details="auto"
-                type="date"
-                density="compact"
-                placeholder="e.g. 2023-03-02"
-              ></v-text-field>
+              <v-text-field v-model="state.form.to_date" label="To date" hide-details="auto" type="date" density="compact"
+                placeholder="e.g. 2023-03-02"></v-text-field>
             </v-col>
 
             <v-col cols="12" md="1">
-              <v-btn
-                type="submit"
-                variant="outlined"
-                color="primary"
-                :loading="state.searching"
-                :disabled="state.searching"
-              >Search</v-btn>
+              <v-btn type="submit" variant="outlined" color="primary" :loading="state.searching"
+                :disabled="state.searching">Search</v-btn>
             </v-col>
 
             <v-col cols="12" md="1">
-              <v-btn
-                type="button"
-                variant="outlined"
-                color="primary"
-                :loading="state.exporting"
-                :disabled="state.exporting"
-                @click.native.prevent="exportMessages"
-              >Export</v-btn>
+              <v-btn type="button" variant="outlined" color="primary" :loading="state.exporting"
+                :disabled="state.exporting" @click.native.prevent="exportMessages">Export</v-btn>
             </v-col>
           </v-row>
         </v-form>
@@ -121,14 +85,8 @@
                 </template>
                 <template v-else-if="r.media_list">
                   <v-list lines="one">
-                    <v-list-item
-                      :href="media.link"
-                      target="_blank"
-                      v-for="media in r.media_list"
-                      :key="media.sid"
-                      :title="media.sid"
-                      :subtitle="media.content_type"
-                    >
+                    <v-list-item :href="media.link" target="_blank" v-for="media in r.media_list" :key="media.sid"
+                      :title="media.sid" :subtitle="media.content_type">
                       <template v-slot:prepend>
                         <v-icon color="primary" :icon="icon(media.content_type)"></v-icon>
                       </template>
@@ -149,13 +107,8 @@
               </template>
               <template v-if="r.error_code">
                 <div>
-                  <v-chip
-                    class="my-1"
-                    size="small"
-                    color="error"
-                    :href="errorPageUrl(r.error_code)"
-                    target="_blank"
-                  >Error code {{ r.error_code }}</v-chip>
+                  <v-chip class="my-1" size="small" color="error" :href="errorPageUrl(r.error_code)" target="_blank">Error
+                    code {{ r.error_code }}</v-chip>
                 </div>
               </template>
             </td>
