@@ -229,7 +229,9 @@ async function search() {
 async function exportMessages() {
   state.value.exporting = true;
 
-  let results = Array();
+  const columns = ['sid', 'direction', 'from', 'to', 'body', 'date_updated', 'num_segments', 'status', 'price', 'error_code', 'error_message'];
+  const labels = [['SID', 'Direction', 'From', 'To', 'Body', 'Date', 'Segments', 'Status', 'Price', 'Twilio error code', 'Twilio error message']];
+
   let next_page_uri = "";
   const { book } = prepareWorkBook();
   let sheet;
@@ -248,16 +250,30 @@ async function exportMessages() {
     } else {
       next_page_uri = result.next_page_uri;
     }
-    sheet = appendContentWorkBook({
+    let workbookRef = appendContentWorkBook({
+      columns: columns,
+      labels: labels,
       book: book,
       sheet: sheet,
       sheet_name: "messages_history",
-      messages: result.messages
+      messages: result.messages.map(m => {
+        m.price = `${m.price} ${m.price_unit}`
+        for(const key of Object.keys(m)){
+          if(key == 'date_updated'){
+            m[key] = localDate(m[key])
+          }
+          if(!columns.includes(key)){
+            m[key] = undefined
+          }
+        }
+        return m
+      })
     });
+    sheet = workbookRef.sheet
   } while (next_page_uri);
   writeWorkBook({
     book,
-    output: `${state.value.form.from}_${state.value.form.from_date}.xlsx`
+    output: `${xlsxFileName()}.xlsx`
   });
   state.value.exporting = false;
 }
@@ -334,6 +350,20 @@ function icon(contentType: string) {
 
 function errorPageUrl(code: any) {
   return `https://www.twilio.com/docs/errors/${code}`;
+}
+
+const xlsxFileName = () => {
+  if (state.value.form.from && state.value.form.from_date) {
+    return `${state.value.form.from}_${state.value.form.from_date}`
+  }
+  else if (state.value.form.from) {
+    return state.value.form.from
+  }
+  else if (state.value.form.from_date) {
+    return state.value.form.from_date
+  } else {
+    return "export_messages"
+  }
 }
 
 function tableMouseupHandler() {

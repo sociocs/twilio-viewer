@@ -5,12 +5,17 @@ export function prepareWorkBook() {
     return { book }
 }
 
-export function appendContentWorkBook({ book, sheet, messages, sheet_name }: { book: xlsx.WorkBook, sheet?: xlsx.Sheet, messages: Array<any>, sheet_name?: string }) {
+export function appendContentWorkBook({ book, sheet, messages, sheet_name = "sheet1", columns, labels }: { book: xlsx.WorkBook, sheet?: xlsx.Sheet, messages: Array<any>, sheet_name?: string, columns?: Array<any>, labels?: Array<any> }) {
     if (sheet) {
-        xlsx.utils.sheet_add_json(sheet, messages, { origin: -1 })
+        xlsx.utils.sheet_add_json(sheet, messages, { origin: -1, header: columns, skipHeader: true })
     }
     else {
-        sheet = xlsx.utils.json_to_sheet(messages)
+        if (labels) {
+            sheet = xlsx.utils.aoa_to_sheet(labels)
+            xlsx.utils.sheet_add_json(sheet, messages, { origin: -1, header: columns, skipHeader: true })
+        } else {
+            sheet = xlsx.utils.json_to_sheet(messages, { header: columns })
+        }
         xlsx.utils.book_append_sheet(book, sheet, sheet_name)
     }
     return { book, sheet }
