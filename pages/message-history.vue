@@ -295,15 +295,18 @@ async function exportMessages() {
     } else {
       next_page_uri = result.next_page_uri;
     }
-    // appendContentWorkBook({
-    //   book: book,
-    //   sheet: sheet,
-    //   messages: result.messages
-    // });
+    sheet = appendContentWorkBook({
+      book: book,
+      sheet: sheet,
+      sheet_name: "messages_history",
+      messages: result.messages
+    });
   } while (next_page_uri);
-
+  writeWorkBook({
+    book,
+    output: `${state.value.form.from}_${state.value.form.from_date}.xlsx`
+  });
   state.value.exporting = false;
-  console.log(results);
 }
 
 async function loadMore(isIntersecting: boolean) {
