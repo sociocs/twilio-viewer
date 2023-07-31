@@ -124,6 +124,8 @@
 </template>
 
 <script setup lang="ts">
+import * as dayjs from 'dayjs'
+
 const store = useMainStore();
 
 const state = ref({
@@ -256,24 +258,24 @@ async function exportMessages() {
       book: book,
       sheet: sheet,
       sheet_name: "messages_history",
-      messages: result.messages.map(m => {
-        m.price = `${m.price} ${m.price_unit}`
-        for(const key of Object.keys(m)){
-          if(key == 'date_updated'){
-            m[key] = localDate(m[key])
+      messages: result.messages.map(message => {
+        message.price = `${message.price} ${message.price_unit}`
+        for (const key of Object.keys(message)) {
+          if (key == 'date_updated') {
+            message[key] = localDate(message[key])
           }
-          if(!columns.includes(key)){
-            m[key] = undefined
+          if (!columns.includes(key)) {
+            message[key] = undefined
           }
         }
-        return m
+        return message
       })
     });
     sheet = workbookRef.sheet
   } while (next_page_uri);
   writeWorkBook({
     book,
-    output: `${xlsxFileName()}.xlsx`
+    output: xlsxFileName()
   });
   state.value.exporting = false;
 }
@@ -353,17 +355,21 @@ function errorPageUrl(code: any) {
 }
 
 const xlsxFileName = () => {
-  if (state.value.form.from && state.value.form.from_date) {
-    return `${state.value.form.from}_${state.value.form.from_date}`
+  let filename_parts = ["messages"]
+  if (state.value.form.from) {
+    filename_parts.push(state.value.form.from)
   }
-  else if (state.value.form.from) {
-    return state.value.form.from
+  if (state.value.form.to) {
+    filename_parts.push(state.value.form.to)
   }
-  else if (state.value.form.from_date) {
-    return state.value.form.from_date
-  } else {
-    return "export_messages"
+  if (state.value.form.from_date) {
+    filename_parts.push(dayjs(state.value.form.from_date).format("YYYYMMDD"))
   }
+  if (state.value.form.to_date) {
+    filename_parts.push(dayjs(state.value.form.to_date).format("YYYYMMDD"))
+  }
+  filename_parts.push(dayjs().format("YYYYMMDDHHmmSS"))
+  return `${filename_parts.join("_")}.xlsx`
 }
 
 function tableMouseupHandler() {
