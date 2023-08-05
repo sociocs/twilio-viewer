@@ -244,7 +244,7 @@ async function exportMessages() {
       to: state.value.form.to,
       fromDate: state.value.form.from_date,
       toDate: state.value.form.to_date,
-      pageSize: "1000",
+      pageSize: 1000,
       nextPageUrl: next_page_uri
     });
     if (error) {
