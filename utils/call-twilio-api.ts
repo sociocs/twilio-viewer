@@ -67,7 +67,7 @@ export function twloFetchMessages({ accountSid, from, to, fromDate, toDate, next
             searchParams.append("ToDate<", toDate);
         }
         if (pageSize) {
-            searchParams.append("PageSize", pageSize);
+            searchParams.append("PageSize", pageSize.toString());
         }
 
         const qs = searchParams.toString();

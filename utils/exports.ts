@@ -9,14 +9,15 @@ export function appendContentWorkBook({ book, sheet, messages, sheet_name = "she
 
     let columns = headers.map(h => Object.keys(h)[0]) // column headers
 
-    // set keys not in the header list as undefined
+    // pick only keys defined in headers
     let processed_messages = messages.map(m => {
+        let message: Record<string, any> = {};
         for(const key of Object.keys(m)){
-            if(!columns.includes(key)){
-                m[key] = undefined
+            if(columns.includes(key)){
+                message[key] = m[key]
             }
         }
-        return m
+        return message
     })
 
     if (sheet) {
