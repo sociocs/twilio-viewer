@@ -5,17 +5,30 @@ export function prepareWorkBook() {
     return { book }
 }
 
-export function appendContentWorkBook({ book, sheet, messages, sheet_name = "sheet1", columns, labels }: { book: xlsx.WorkBook, sheet?: xlsx.Sheet, messages: Array<any>, sheet_name?: string, columns?: Array<any>, labels?: Array<any> }) {
+export function appendContentWorkBook({ book, sheet, messages, sheet_name = "sheet1", headers }: { book: xlsx.WorkBook, sheet?: xlsx.Sheet, messages: Array<any>, sheet_name?: string,headers: Array<any> }) {
+
+    let columns = headers.map(h => Object.keys(h)[0]) // column headers
+
+    // set keys not in the header list as undefined
+    let processed_messages = messages.map(m => {
+        for(const key of Object.keys(m)){
+            if(!columns.includes(key)){
+                m[key] = undefined
+            }
+        }
+        return m
+    })
+
     if (sheet) {
-        xlsx.utils.sheet_add_json(sheet, messages, { origin: -1, header: columns, skipHeader: true })
+        // for existing sheet, just add the json array
+        xlsx.utils.sheet_add_json(sheet, processed_messages, { origin: -1, header: columns, skipHeader: true })
     }
     else {
-        if (labels) {
-            sheet = xlsx.utils.aoa_to_sheet(labels)
-            xlsx.utils.sheet_add_json(sheet, messages, { origin: -1, header: columns, skipHeader: true })
-        } else {
-            sheet = xlsx.utils.json_to_sheet(messages, { header: columns })
-        }
+        // if sheet is not existing, 
+        // create a new sheet with column headers
+        let labels = headers.map(h => Object.values(h)[0])
+        sheet = xlsx.utils.aoa_to_sheet([labels])
+        xlsx.utils.sheet_add_json(sheet, processed_messages, { origin: -1, header: columns, skipHeader: true })
         xlsx.utils.book_append_sheet(book, sheet, sheet_name)
     }
     return { book, sheet }
