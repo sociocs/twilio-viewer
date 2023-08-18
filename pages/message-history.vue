@@ -42,7 +42,7 @@
                 :disabled='state.searching'>Search</v-btn>
             </v-col>
 
-            <v-col cols='12' md='1' class="d-flex">
+            <v-col cols='12' md='1'>
               <div v-if="state.exporting">
                 <v-progress-circular indeterminate color="purple"></v-progress-circular>
               </div>
