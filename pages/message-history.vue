@@ -42,16 +42,21 @@
                 :disabled='state.searching'>Search</v-btn>
             </v-col>
 
-            <v-col cols='12' md='1' class="d-flex justify-center">
+            <v-col cols='12' md='1'>
               <div v-if="state.exporting">
                 <v-progress-circular indeterminate color="purple"></v-progress-circular>
               </div>
-              <svg 
-              v-else
-              @click.native.prevent='exportMessages'
-              xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="rgb(29, 111, 66)" class="bi bi-file-earmark-excel" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"></path><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"></path>
-            </svg>
-
+              <a href="#" v-else @click.native.prevent='exportMessages' class="mt-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="rgb(29, 111, 66)"
+                  class="bi bi-file-earmark-excel " viewBox="0 0 16 16">
+                  <path
+                    d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z">
+                  </path>
+                  <path
+                    d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z">
+                  </path>
+                </svg>
+              </a>
             </v-col>
           </v-row>
         </v-form>
@@ -131,7 +136,7 @@
 </template>
 
 <script setup lang='ts'>
-import * as dayjs from 'dayjs'
+import dayjs from 'dayjs';
 
 const store = useMainStore();
 
@@ -239,10 +244,10 @@ async function exportMessages() {
   state.value.exporting = true;
 
   const headers = [
-    {'sid':'SID'},{'direction':'Direction'},{'from':'From'},{'to':'To'},{'body':'Body'},{'date_updated':'Date'},{'num_segments':'Segments'},
-    {'status':'Status'},{'price':'Price'},{'error_code':'Twilio error code'},{'error_message':'Twilio error message'}
+    { 'sid': 'SID' }, { 'direction': 'Direction' }, { 'from': 'From' }, { 'to': 'To' }, { 'body': 'Body' }, { 'date_updated': 'Date' }, { 'num_segments': 'Segments' },
+    { 'status': 'Status' }, { 'price': 'Price' }, { 'error_code': 'Twilio error code' }, { 'error_message': 'Twilio error message' }
   ]
- 
+
   let next_page_uri = '';
   const { book } = prepareWorkBook();
   let sheet;
@@ -267,16 +272,16 @@ async function exportMessages() {
       sheet: sheet,
       sheet_name: 'messages_history',
       messages: result.messages.map((message: any) => {
-        
+
         // concat price and unit
         message.price = `${message.price_unit} ${message.price}`
-        
+
         for (const key of Object.keys(message)) {
           // cast date format to local date
           if (key == 'date_updated') {
             message[key] = localDate(message[key])
           }
-     
+
         }
         return message
       })
