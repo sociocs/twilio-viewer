@@ -61,10 +61,10 @@ export function twloFetchMessages({ accountSid, from, to, fromDate, toDate, next
             searchParams.append("To", to);
         }
         if (fromDate) {
-            searchParams.append("FromDate>", fromDate);
+            searchParams.append("DateSent>", fromDate);
         }
         if (toDate) {
-            searchParams.append("ToDate<", toDate);
+            searchParams.append("DateSent<", toDate);
         }
         if (pageSize) {
             searchParams.append("PageSize", pageSize.toString());
