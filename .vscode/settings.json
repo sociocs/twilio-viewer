@@ -1,0 +1,7 @@
+{
+    "vue.splitEditors.layout.right": [
+        "template",
+        "customBlocks"
+    ],
+    "editor.formatOnSave": false
+}

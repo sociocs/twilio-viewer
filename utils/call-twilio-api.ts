@@ -46,7 +46,7 @@ export function twloFetchMessagingServices({ accountSid, refreshCache }: { accou
     return callTwilioAPI({ baseUrl: "https://messaging.twilio.com/v1", path: `/Services?AccountSID=${accountSid}`, refreshCache });
 }
 
-export function twloFetchMessages({ accountSid, from, to, fromDate, toDate, nextPageUrl, refreshCache }: { accountSid: string, from?: string, to?: string, fromDate?: string, toDate?: string, nextPageUrl?: string, refreshCache?: boolean }) {
+export function twloFetchMessages({ accountSid, from, to, fromDate, toDate, nextPageUrl, pageSize=50, refreshCache }: { accountSid: string, from?: string, to?: string, fromDate?: string, toDate?: string, nextPageUrl?: string, pageSize?: number, refreshCache?: boolean }) {
     let path = `/2010-04-01/Accounts/${accountSid}/Messages.json`;
 
     if (nextPageUrl) {
@@ -65,6 +65,9 @@ export function twloFetchMessages({ accountSid, from, to, fromDate, toDate, next
         }
         if (toDate) {
             searchParams.append("ToDate<", toDate);
+        }
+        if (pageSize) {
+            searchParams.append("PageSize", pageSize.toString());
         }
 
         const qs = searchParams.toString();
