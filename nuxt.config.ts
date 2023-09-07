@@ -1,37 +1,42 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+    devtools: { enabled: true },
 
-  googleFonts: {
-    download: false,
-    families: {
-      Roboto: true,
-    }
-  },
+    googleFonts: {
+        download: false,
+        families: {
+            Roboto: true,
+        }
+    },
 
-  imports: {
-    dirs: [
-      "stores",
+    gtag: {
+        id: "G-3EZVFZYBLT",
+    },
+
+    imports: {
+        dirs: [
+            "stores",
+        ],
+    },
+
+    modules: [
+        "@invictus.codes/nuxt-vuetify",
+        "@nuxtjs/google-fonts",
+        "@pinia/nuxt",
+        "nuxt-gtag",
     ],
-  },
 
-  modules: [
-    "@invictus.codes/nuxt-vuetify",
-    "@nuxtjs/google-fonts",
-    "@pinia/nuxt",
-  ],
+    ssr: false,
 
-  ssr: false,
-
-  vite: {
-    define: {
-      "process.env.DEBUG": false,
+    vite: {
+        define: {
+            "process.env.DEBUG": false,
+        },
     },
-  },
 
-  vuetify: {
-    moduleOptions: {
-      treeshaking: true,
+    vuetify: {
+        moduleOptions: {
+            treeshaking: true,
+        },
     },
-  },
 });
