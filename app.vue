@@ -15,7 +15,7 @@
 useHead({
     title: "Twilio Viewer",
     meta: [
-        { name: "description", content: "Easy viewing of Twilio accounts, subaccounts, and related resources (such as message & voice call logs, alerts, events, and billing)." },
+        { name: "description", content: "Easy viewing of Twilio account, and related resources (i.e., message & voice call logs, alerts, events, and billing). Free & open source. No third-party servers." },
     ],
     link: [
         { rel: "icon", type: "image/png", href: "/icon.png" },
