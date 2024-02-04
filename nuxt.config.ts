@@ -34,6 +34,7 @@ export default defineNuxtConfig({
     modules: [
         "@invictus.codes/nuxt-vuetify",
         "@nuxtjs/google-fonts",
+        "@nuxtjs/sitemap",
         "@pinia/nuxt",
         "nuxt-gtag",
     ],

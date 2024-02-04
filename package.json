@@ -12,6 +12,7 @@
     "@invictus.codes/nuxt-vuetify": "^0.2.20",
     "@nuxt/devtools": "latest",
     "@nuxtjs/google-fonts": "^3.0.1",
+    "@nuxtjs/sitemap": "^5.1.0",
     "@types/node": "^18",
     "nuxt": "^3.6.1",
     "nuxt-gtag": "^0.6.2"
