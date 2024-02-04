@@ -137,6 +137,11 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+    title: "Twilio Account Billing",
+    description: "Your Twilio account's billing information grouped in an easy to view format.",
+});
+
 const store = useMainStore();
 
 const state = ref({

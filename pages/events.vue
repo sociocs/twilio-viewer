@@ -1,7 +1,11 @@
 <template>
     <v-app-bar title="Events">
         <template v-slot:append>
-            <AccountPickList v-model="store.account_sid" :accounts_and_sub="store.accounts_and_sub" :disabled="true">
+            <AccountPickList
+                v-model="store.account_sid"
+                :accounts_and_sub="store.accounts_and_sub"
+                :disabled="true"
+            >
             </AccountPickList>
             <Refresh :loading="state.loading" @click="refresh"></Refresh>
         </template>
@@ -19,23 +23,45 @@
                 <v-form @submit.prevent="search">
                     <v-row class="align-center">
                         <v-col>
-                            <v-text-field v-model="state.form.event_type" label="Event type" hide-details="auto"
-                                density="compact" placeholder="e.g. phone-number.updated"></v-text-field>
+                            <v-text-field
+                                v-model="state.form.event_type"
+                                label="Event type"
+                                hide-details="auto"
+                                density="compact"
+                                placeholder="e.g. phone-number.updated"
+                            ></v-text-field>
                         </v-col>
 
                         <v-col cols="12" md="4">
-                            <v-text-field v-model="state.form.resource_sid" label="Resource SID" hide-details="auto"
-                                density="compact" placeholder="e.g. PN12345..."></v-text-field>
+                            <v-text-field
+                                v-model="state.form.resource_sid"
+                                label="Resource SID"
+                                hide-details="auto"
+                                density="compact"
+                                placeholder="e.g. PN12345..."
+                            ></v-text-field>
                         </v-col>
 
                         <v-col>
-                            <v-text-field v-model="state.form.to_date" label="To date" hide-details="auto" type="date"
-                                density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
+                            <v-text-field
+                                v-model="state.form.to_date"
+                                label="To date"
+                                hide-details="auto"
+                                type="date"
+                                density="compact"
+                                placeholder="e.g. 2023-03-02"
+                            ></v-text-field>
                         </v-col>
 
                         <v-col cols="12" md="1">
-                            <v-btn type="submit" variant="outlined" color="primary" :loading="state.searching"
-                                :disabled="state.searching">Search</v-btn>
+                            <v-btn
+                                type="submit"
+                                variant="outlined"
+                                color="primary"
+                                :loading="state.searching"
+                                :disabled="state.searching"
+                                >Search</v-btn
+                            >
                         </v-col>
                     </v-row>
                 </v-form>
@@ -62,18 +88,34 @@
                     <tr v-for="r in state.records" :key="r.sid">
                         <td class="text-center">{{ r.event_type }}</td>
                         <td>
-                            <div style="max-width: 100px;" class="text-truncate" :title="r.resource_sid">
+                            <div
+                                style="max-width: 100px"
+                                class="text-truncate"
+                                :title="r.resource_sid"
+                            >
                                 {{ r.resource_sid }}
                             </div>
                         </td>
-                        <td :title="r.event_date">{{ localDate(r.event_date) }}</td>
+                        <td :title="r.event_date">
+                            {{ localDate(r.event_date) }}
+                        </td>
                         <td class="text-center">{{ r.source }}</td>
                         <td>{{ actor(r) }}</td>
                         <td>{{ r.description }}</td>
                         <td>
-                            <v-list lines="one" density="compact" variant="text" class="py-0">
-                                <v-list-item v-for="item in eventDataItems(r.event_data)" :key="item.label"
-                                    :title="item.label" :subtitle="item.value" class="px-0 text-truncate"></v-list-item>
+                            <v-list
+                                lines="one"
+                                density="compact"
+                                variant="text"
+                                class="py-0"
+                            >
+                                <v-list-item
+                                    v-for="item in eventDataItems(r.event_data)"
+                                    :key="item.label"
+                                    :title="item.label"
+                                    :subtitle="item.value"
+                                    class="px-0 text-truncate"
+                                ></v-list-item>
                             </v-list>
                         </td>
                     </tr>
@@ -87,6 +129,11 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+    title: "Twilio Account Events",
+    description: "Your Twilio account's events in an easy to view format.",
+});
+
 const store = useMainStore();
 
 const state = ref({
@@ -105,7 +152,15 @@ const state = ref({
 });
 
 async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
-    const [error, result] = await twloFetchEvents({ accountSid: store.active_account_sid, eventType: state.value.form.event_type, resourceSid: state.value.form.resource_sid, fromDate: state.value.form.from_date, toDate: state.value.form.to_date, nextPageUrl: state.value.next_page_url, refreshCache });
+    const [error, result] = await twloFetchEvents({
+        accountSid: store.active_account_sid,
+        eventType: state.value.form.event_type,
+        resourceSid: state.value.form.resource_sid,
+        fromDate: state.value.form.from_date,
+        toDate: state.value.form.to_date,
+        nextPageUrl: state.value.next_page_url,
+        refreshCache,
+    });
 
     state.value.error = error;
 
@@ -115,7 +170,9 @@ async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
     } else {
         // when appendResults is asked, append to the records instead of replacing
         if (appendResults) {
-            (result.events as Array<any>).forEach(x => state.value.records.push(x));
+            (result.events as Array<any>).forEach((x) =>
+                state.value.records.push(x)
+            );
         } else {
             state.value.records = result.events;
         }
@@ -130,19 +187,24 @@ function refresh() {
 
     state.value.loading = true;
 
-    loadData(true).then(() => state.value.loading = false);
+    loadData(true).then(() => (state.value.loading = false));
 }
 
 // load initial data
 onMounted(() => {
-    loadData(false).then(() => state.value.loading = false);
-})
+    loadData(false).then(() => (state.value.loading = false));
+});
 
 async function search() {
     state.value.next_page_url = "";
     const form = state.value.form;
 
-    if (!form.event_type && !form.resource_sid && !form.from_date && !form.to_date) {
+    if (
+        !form.event_type &&
+        !form.resource_sid &&
+        !form.from_date &&
+        !form.to_date
+    ) {
         return refresh();
     }
 
@@ -154,7 +216,11 @@ async function search() {
 }
 
 async function loadMore(isIntersecting: boolean) {
-    if (!isIntersecting || !state.value.next_page_url || state.value.loading_more) {
+    if (
+        !isIntersecting ||
+        !state.value.next_page_url ||
+        state.value.loading_more
+    ) {
         return;
     }
 

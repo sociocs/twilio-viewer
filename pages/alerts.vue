@@ -88,6 +88,11 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+    title: "Twilio Account Alerts",
+    description: "Your Twilio account alerts in an easy to view format.",
+});
+
 const store = useMainStore();
 
 const state = ref({

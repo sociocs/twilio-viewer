@@ -6,8 +6,13 @@
             </v-btn>
         </template>
         <template v-slot:append>
-            <v-btn icon="mdi-cached" :loading="state.loading" :disabled="state.loading" @click="refresh"
-                title="Refresh subaccounts from Twilio.">
+            <v-btn
+                icon="mdi-cached"
+                :loading="state.loading"
+                :disabled="state.loading"
+                @click="refresh"
+                title="Refresh subaccounts from Twilio."
+            >
             </v-btn>
         </template>
     </v-app-bar>
@@ -34,7 +39,7 @@
                 </thead>
                 <tbody>
                     <tr v-for="r in state.records" :key="r.sid">
-                        <td> {{ r.sid }}</td>
+                        <td>{{ r.sid }}</td>
                         <td>{{ r.name }}</td>
                         <td>{{ r.status }}</td>
                         <td>{{ localDate(r.created_at) }}</td>
@@ -46,7 +51,12 @@
 </template>
 
 <script setup lang="ts">
-const route = useRoute()
+useSeoMeta({
+    title: "Twilio Subaccounts",
+    description: "Your Twilio subaccounts in an easy to view format.",
+});
+
+const route = useRoute();
 const store = useMainStore();
 
 const state = ref({
@@ -67,9 +77,11 @@ function loadingOff() {
 async function loadData(refreshCache: boolean) {
     loadingOn();
 
-    state.value.records = await dbGetSubaccounts(route.params.account_sid as string);
+    state.value.records = await dbGetSubaccounts(
+        route.params.account_sid as string
+    );
 
-    loadingOff()
+    loadingOff();
 }
 
 // load initial data
@@ -81,7 +93,7 @@ onMounted(async () => {
     }
 
     loadData(false);
-})
+});
 
 async function refresh() {
     loadingOn();

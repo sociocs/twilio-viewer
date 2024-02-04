@@ -30,4 +30,4 @@ Twilio console offers a great lot of functionality, however, it's not convenient
 1. Dexie.js for IndexedDB (<https://dexie.org/>)
 1. Google Roboto Fonts (<https://fonts.google.com/specimen/Roboto>)
 1. Material Design Icons (<https://pictogrammers.com/library/mdi/>)
-2. This project is tested with [BrowserStack](https://email.browserstack.com/c/eJwcyjluhDAUANDTmM4IPN8LhYs0XCPyXxDWsI1tRI4fJfV7HC1a9p3E0U3jNIGxvlvjiB6CIOFgwXhaIAw-sUEryALkuhwd8EQhLEmM-O-RgkFjCQZCK_QK4Cbnoa-Z5Z0_einyueVoemF9nXxXSbWNek_5sBq3WzQH9M4FQP1zrHtQMMie8tYvRerKUt89nXu3xbW1q6rXlzKzMvPzPD2W86lSakv0n5SZuxI5X3IoGFpJlM-7_slvAAAA__-Ewkwq).
+1. This project is tested with [BrowserStack](https://email.browserstack.com/c/eJwcyjluhDAUANDTmM4IPN8LhYs0XCPyXxDWsI1tRI4fJfV7HC1a9p3E0U3jNIGxvlvjiB6CIOFgwXhaIAw-sUEryALkuhwd8EQhLEmM-O-RgkFjCQZCK_QK4Cbnoa-Z5Z0_einyueVoemF9nXxXSbWNek_5sBq3WzQH9M4FQP1zrHtQMMie8tYvRerKUt89nXu3xbW1q6rXlzKzMvPzPD2W86lSakv0n5SZuxI5X3IoGFpJlM-7_slvAAAA__-Ewkwq).

@@ -13,13 +13,9 @@
 
 <script setup lang="ts">
 useHead({
-    title: "Twilio Viewer",
-    meta: [
-        { name: "description", content: "Easy viewing of Twilio account, message & voice call logs, alerts, events, and billing. Free & open source. No third-party servers involved." },
-    ],
-    link: [
-        { rel: "icon", type: "image/png", href: "/icon.png" },
-    ],
+    titleTemplate: (pageTitle) => {
+        return pageTitle ? `${pageTitle} - Twilio Viewer` : "Twilio Viewer";
+    },
 });
 
 // critical data points for all the routes needs to be loaded upfront
@@ -37,11 +33,11 @@ store.savedConnectionsFill().then(() => {
 <style>
 table,
 table .v-list-item-subtitle {
-    font-size: .85rem;
+    font-size: 0.85rem;
 }
 
 table .v-list-item-title {
-    font-size: .9rem;
+    font-size: 0.9rem;
 }
 
 .v-autocomplete__selection {

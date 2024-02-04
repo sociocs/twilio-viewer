@@ -57,6 +57,11 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+    title: "Twilio Account Messaging Services",
+    description: "Your Twilio account's messaging services in an easy to view format.",
+});
+
 const store = useMainStore();
 
 const state = ref({

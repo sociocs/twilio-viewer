@@ -1,7 +1,10 @@
 <template>
     <v-app-bar title="Voice call history">
         <template v-slot:append>
-            <AccountPickList v-model="store.active_account_sid" :accounts_and_sub="store.accounts_and_sub">
+            <AccountPickList
+                v-model="store.active_account_sid"
+                :accounts_and_sub="store.accounts_and_sub"
+            >
             </AccountPickList>
             <Refresh :loading="state.loading" @click="refresh"></Refresh>
         </template>
@@ -19,28 +22,56 @@
                 <v-form @submit.prevent="search">
                     <v-row class="align-center">
                         <v-col>
-                            <v-text-field v-model="state.form.from" label="From number" hide-details="auto"
-                                density="compact" placeholder="e.g. 16319999998"></v-text-field>
+                            <v-text-field
+                                v-model="state.form.from"
+                                label="From number"
+                                hide-details="auto"
+                                density="compact"
+                                placeholder="e.g. 16319999998"
+                            ></v-text-field>
                         </v-col>
 
                         <v-col>
-                            <v-text-field v-model="state.form.to" label="To number" hide-details="auto" density="compact"
-                                placeholder="e.g. 16319999999"></v-text-field>
+                            <v-text-field
+                                v-model="state.form.to"
+                                label="To number"
+                                hide-details="auto"
+                                density="compact"
+                                placeholder="e.g. 16319999999"
+                            ></v-text-field>
                         </v-col>
 
                         <v-col>
-                            <v-text-field v-model="state.form.from_date" label="From date" hide-details="auto" type="date"
-                                density="compact" placeholder="e.g. 2023-03-01"></v-text-field>
+                            <v-text-field
+                                v-model="state.form.from_date"
+                                label="From date"
+                                hide-details="auto"
+                                type="date"
+                                density="compact"
+                                placeholder="e.g. 2023-03-01"
+                            ></v-text-field>
                         </v-col>
 
                         <v-col>
-                            <v-text-field v-model="state.form.to_date" label="To date" hide-details="auto" type="date"
-                                density="compact" placeholder="e.g. 2023-03-02"></v-text-field>
+                            <v-text-field
+                                v-model="state.form.to_date"
+                                label="To date"
+                                hide-details="auto"
+                                type="date"
+                                density="compact"
+                                placeholder="e.g. 2023-03-02"
+                            ></v-text-field>
                         </v-col>
 
                         <v-col cols="12" md="1">
-                            <v-btn type="submit" variant="outlined" color="primary" :loading="state.searching"
-                                :disabled="state.searching">Search</v-btn>
+                            <v-btn
+                                type="submit"
+                                variant="outlined"
+                                color="primary"
+                                :loading="state.searching"
+                                :disabled="state.searching"
+                                >Search</v-btn
+                            >
                         </v-col>
                     </v-row>
                 </v-form>
@@ -68,14 +99,20 @@
                 <tbody>
                     <tr v-for="r in state.records" :key="r.sid">
                         <td>
-                            <div style="max-width: 100px;" class="text-truncate" :title="r.sid">
+                            <div
+                                style="max-width: 100px"
+                                class="text-truncate"
+                                :title="r.sid"
+                            >
                                 {{ r.sid }}
                             </div>
                         </td>
                         <td class="text-center">{{ r.direction }}</td>
                         <td>{{ r.from }}</td>
                         <td>{{ r.to }}</td>
-                        <td :title="r.start_time">{{ localDate(r.start_time) }}</td>
+                        <td :title="r.start_time">
+                            {{ localDate(r.start_time) }}
+                        </td>
                         <td :title="r.end_time">{{ localDate(r.end_time) }}</td>
                         <td class="text-center">{{ duration(r.duration) }}</td>
                         <td class="text-center">{{ r.status }}</td>
@@ -91,6 +128,12 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+    title: "Twilio Voice Call History",
+    description:
+        "Your Twilio account's voice call history in an easy to view format.",
+});
+
 const store = useMainStore();
 
 const state = ref({
@@ -121,7 +164,15 @@ function setNextPageUrl(value: string) {
 }
 
 async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
-    const [error, result] = await twloFetchCalls({ accountSid: store.active_account_sid, from: state.value.form.from, to: state.value.form.to, fromDate: state.value.form.from_date, toDate: state.value.form.to_date, nextPageUrl: state.value.next_page_url, refreshCache });
+    const [error, result] = await twloFetchCalls({
+        accountSid: store.active_account_sid,
+        from: state.value.form.from,
+        to: state.value.form.to,
+        fromDate: state.value.form.from_date,
+        toDate: state.value.form.to_date,
+        nextPageUrl: state.value.next_page_url,
+        refreshCache,
+    });
 
     state.value.error = error;
 
@@ -131,7 +182,9 @@ async function loadData(refreshCache: boolean, { appendResults = false } = {}) {
     } else {
         // when appendResults is asked, append to the records instead of replacing
         if (appendResults) {
-            (result.calls as Array<any>).forEach(x => state.value.records.push(x));
+            (result.calls as Array<any>).forEach((x) =>
+                state.value.records.push(x)
+            );
         } else {
             state.value.records = result.calls;
         }
@@ -152,7 +205,7 @@ function refresh() {
 // load initial data
 onMounted(() => {
     loadData(false).then(() => loadingOff());
-})
+});
 
 // when store.active_account_sid changes, data should refreshed
 watch(
@@ -164,9 +217,9 @@ watch(
 
         await loadData(false);
 
-        loadingOff()
-    },
-)
+        loadingOff();
+    }
+);
 
 async function search() {
     setNextPageUrl("");
@@ -184,7 +237,11 @@ async function search() {
 }
 
 async function loadMore(isIntersecting: boolean) {
-    if (!isIntersecting || !state.value.next_page_url || state.value.loading_more) {
+    if (
+        !isIntersecting ||
+        !state.value.next_page_url ||
+        state.value.loading_more
+    ) {
         return;
     }
 
@@ -206,6 +263,8 @@ function price(record: any) {
 }
 
 function tableMouseupHandler() {
-    highlightSelectedText(document.getElementsByTagName("table")?.item(0) as Node || undefined);
+    highlightSelectedText(
+        (document.getElementsByTagName("table")?.item(0) as Node) || undefined
+    );
 }
 </script>

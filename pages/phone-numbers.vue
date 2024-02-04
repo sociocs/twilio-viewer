@@ -67,6 +67,11 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+    title: "Twilio Phone Numbers",
+    description: "Your Twilio account's phone numbers in an easy to view format.",
+});
+
 const store = useMainStore();
 
 const state = ref({

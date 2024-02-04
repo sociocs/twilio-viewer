@@ -1,7 +1,10 @@
 <template>
     <v-app-bar title="Account info">
         <template v-slot:append>
-            <AccountPickList v-model="store.active_account_sid" :accounts_and_sub="store.accounts_and_sub">
+            <AccountPickList
+                v-model="store.active_account_sid"
+                :accounts_and_sub="store.accounts_and_sub"
+            >
             </AccountPickList>
             <Refresh :loading="state.loading" @click="loadData(true)"></Refresh>
         </template>
@@ -35,6 +38,11 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+    title: "Twilio Account Information",
+    description: "Your Twilio account information in an easy to view format.",
+});
+
 const store = useMainStore();
 
 const state = ref({
@@ -46,11 +54,22 @@ const state = ref({
 async function loadData(refreshCache: boolean) {
     state.value.loading = true;
 
-    const [error, result] = await twloFetchAccount({ accountSid: store.active_account_sid, refreshCache });
+    const [error, result] = await twloFetchAccount({
+        accountSid: store.active_account_sid,
+        refreshCache,
+    });
 
     state.value.error = error;
     if (!error) {
-        state.value.records = toLabelValArray(result, ["sid", "owner_account_sid", "friendly_name", "type", "status", "date_created", "date_updated"]);
+        state.value.records = toLabelValArray(result, [
+            "sid",
+            "owner_account_sid",
+            "friendly_name",
+            "type",
+            "status",
+            "date_created",
+            "date_updated",
+        ]);
     }
 
     state.value.loading = false;
@@ -59,11 +78,11 @@ async function loadData(refreshCache: boolean) {
 // load initial data
 onMounted(() => {
     loadData(false);
-})
+});
 
 // when store.active_account_sid changes, data should refreshed
 watch(
     () => store.active_account_sid,
-    () => loadData(false),
-)
+    () => loadData(false)
+);
 </script>
