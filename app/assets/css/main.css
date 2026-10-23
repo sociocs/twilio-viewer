@@ -1,0 +1,13 @@
+@import "tailwindcss" theme(static);
+@import "@nuxt/ui";
+@import "vue-json-pretty/lib/styles.css";
+
+/* Dark mode adjustments for vue-json-pretty */
+.dark .vjs-tree {
+  color: #e5e7eb;
+}
+
+.dark .vjs-tree-node.is-highlight,
+.dark .vjs-tree-node:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}

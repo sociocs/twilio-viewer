@@ -1,33 +1,46 @@
 # Twilio Viewer
 
-Twilio console offers a great lot of functionality, however, it's not convenient to use it on regular basis. This app is intended to make it easier to see Twilio accounts, subaccounts, and related resources.
+A fast, private, 100% client-side web application for inspecting Twilio accounts and related resources directly in your browser without any backend proxy or server hosting.
 
-1. It uses Twilio APIs directly from the browser to fetch data. No third party servers are involved.
-1. Your information and data stays local. It doesn't go through any other services or servers.
-1. If you chose to save the Twilio auth token, it is stored in plain text in the browser's IndexedDB.
-1. It relies heavily on the browser cache to avoid API overloading. Use refresh button on top right to reload the cache.
-1. It's highly opiniated on what information is important on day-to-day basis for Twilio customers.
+## Key Highlights
 
-## Available features
+- **100% Client-Side**: Calls Twilio REST APIs directly from the browser. No third-party servers or backend intermediaries.
+- **Privacy & Security**: Credentials and data stay local in your browser's IndexedDB.
+- **Multi-Account & Subaccounts**: Save multiple Twilio connections and switch between primary accounts and subaccounts effortlessly.
+- **Static Deployment**: Runs entirely as a static single-page application hosted on GitHub Pages.
 
-1. Connect to Twilio account.
-1. Save multiple Twilio accounts.
-1. See information at the subaccount level (if there are any).
-1. List of phone numbers.
-1. Message history with search facility.
-1. Voice call history with search facility.
-1. Alerts (for example, errors)
-1. Events (logs of changes to the account)
-1. Billing (simple view to charges in all categories)
+## Live App & Deployment
 
-## Development stack
+- **Hosted URL**: [https://twilio-viewer.sociocs.com/](https://twilio-viewer.sociocs.com/)
+- **Automated CI/CD**: Automatically built and deployed to GitHub Pages on every push to the `main` branch via GitHub Actions workflow ([`.github/workflows/deploy-to-github-pages.yml`](.github/workflows/deploy-to-github-pages.yml)).
 
-1. Vue.js 3 (<https://vuejs.org/>)
-1. Nuxt 3 (<https://nuxt.com/>)
-1. Vuetify 3 (<https://vuetifyjs.com/en/>)
-1. Twilio REST APIs (<https://www.twilio.com/docs/usage/api>)
-1. IndexedDB (<https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB>)
-1. Dexie.js for IndexedDB (<https://dexie.org/>)
-1. Google Roboto Fonts (<https://fonts.google.com/specimen/Roboto>)
-1. Material Design Icons (<https://pictogrammers.com/library/mdi/>)
-1. This project is tested with [BrowserStack](https://email.browserstack.com/c/eJwcyjluhDAUANDTmM4IPN8LhYs0XCPyXxDWsI1tRI4fJfV7HC1a9p3E0U3jNIGxvlvjiB6CIOFgwXhaIAw-sUEryALkuhwd8EQhLEmM-O-RgkFjCQZCK_QK4Cbnoa-Z5Z0_einyueVoemF9nXxXSbWNek_5sBq3WzQH9M4FQP1zrHtQMMie8tYvRerKUt89nXu3xbW1q6rXlzKzMvPzPD2W86lSakv0n5SZuxI5X3IoGFpJlM-7_slvAAAA__-Ewkwq).
+## Features
+
+- **Account & Subaccounts**: Account status, active services summary, balance, and subaccount inspection.
+- **Phone Numbers**: Filter and inspect active numbers, voice/SMS capabilities, and webhook URLs.
+- **Messaging Services**: View messaging services, alpha sender IDs, and linked number pools.
+- **Message History**: Search SMS and MMS logs with delivery status filters and raw JSON inspection.
+- **Voice Call History**: Review call logs, durations, costs, and call recordings.
+- **Debugger Alerts & Events**: Track error codes, warnings, and account audit event logs.
+- **Billing & Usage**: Itemized usage records, sub-breakdowns, and date preset cost reconciliation.
+
+## Tech Stack
+
+- **Framework**: [Nuxt 4](https://nuxt.com/) & [Vue 3](https://vuejs.org/) (Composition API)
+- **UI & Styling**: [Nuxt UI](https://ui.nuxt.com/) & [Tailwind CSS](https://tailwindcss.com/)
+- **State Management**: [Pinia](https://pinia.vuejs.org/)
+- **Local Storage**: [Dexie.js](https://dexie.org/) (IndexedDB wrapper)
+- **Utilities**: [VueUse](https://vueuse.org/), [date-fns](https://date-fns.org/), [es-toolkit](https://es-toolkit.slash.page/)
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Generate static build for production
+npm run generate
+```

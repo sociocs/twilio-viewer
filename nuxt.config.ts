@@ -1,55 +1,53 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    app: {
-        head: {
-            title: "Twilio Viewer",
-            meta: [
-                { name: "description", content: "Easy viewing of Twilio account, message & voice call logs, alerts, events, and billing. Free & open source. No third-party servers involved." },
-            ],
-            link: [
-                { rel: "icon", type: "image/png", href: "/icon.png" },
-            ],
+
+  modules: [
+    "@nuxt/ui",
+    "@pinia/nuxt",
+    "@vueuse/nuxt",
+    "@nuxt/eslint",
+  ],
+
+  ssr: false,
+
+  devtools: { enabled: false },
+
+  app: {
+    head: {
+      title: "Twilio Viewer",
+      meta: [
+        { charset: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        {
+          name: "description",
+          content: "Fast, secure client-side viewer for Twilio accounts, phone numbers, message history, voice calls, alerts, and billing.",
         },
+      ],
+      link: [
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+      ],
+      htmlAttrs: {
+        lang: "en",
+      },
     },
+  },
 
-    devtools: { enabled: true },
+  css: [
+    "~/assets/css/main.css",
+  ],
 
-    googleFonts: {
-        download: false,
-        families: {
-            Roboto: true,
-        }
+  runtimeConfig: {
+    public: {
+      version: "2.0.0",
     },
+  },
 
-    gtag: {
-        id: "G-3EZVFZYBLT",
+  compatibilityDate: "2025-07-15",
+
+  eslint: {
+    config: {
+      stylistic: true,
     },
-
-    imports: {
-        dirs: [
-            "stores",
-        ],
-    },
-
-    modules: [
-        "@invictus.codes/nuxt-vuetify",
-        "@nuxtjs/google-fonts",
-        "@nuxtjs/sitemap",
-        "@pinia/nuxt",
-        "nuxt-gtag",
-    ],
-
-    ssr: false,
-
-    vite: {
-        define: {
-            "process.env.DEBUG": false,
-        },
-    },
-
-    vuetify: {
-        moduleOptions: {
-            treeshaking: true,
-        },
-    },
+  },
 });
