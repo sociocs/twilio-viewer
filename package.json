@@ -20,6 +20,7 @@
     "dexie": "^4.4.6",
     "es-toolkit": "^1.52.0",
     "nuxt": "^4.6.2",
+    "nuxt-gtag": "^5.0.0",
     "pinia": "^4.1.0",
     "scule": "^1.3.0",
     "tailwindcss": "^4.3.3",

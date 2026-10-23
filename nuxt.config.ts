@@ -6,6 +6,7 @@ export default defineNuxtConfig({
     "@pinia/nuxt",
     "@vueuse/nuxt",
     "@nuxt/eslint",
+    "nuxt-gtag",
   ],
 
   ssr: false,
@@ -49,5 +50,9 @@ export default defineNuxtConfig({
     config: {
       stylistic: true,
     },
+  },
+
+  gtag: {
+    id: "G-3EZVFZYBLT",
   },
 });
